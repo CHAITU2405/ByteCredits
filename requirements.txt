@@ -25,3 +25,4 @@ pyserial==3.5
 # Additional Dependencies
 requests>=2.18.0
 cryptography>=36.0.0
+gunicorn
