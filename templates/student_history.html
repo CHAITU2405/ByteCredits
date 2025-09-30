@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student History - Library Management</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background: var(--light-gray);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: var(--white);
+            padding: var(--space-6) var(--space-8);
+            box-shadow: var(--shadow-sm);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .title {
+            font-size: var(--font-size-3xl);
+            color: var(--gray-900);
+            margin-bottom: var(--space-2);
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: var(--gray-600);
+            text-align: center;
+            font-size: var(--font-size-lg);
+            font-weight: 400;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--space-8);
+        }
+
+        .back-link {
+            display: inline-block;
+            color: var(--gray-600);
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: var(--space-6);
+            padding: var(--space-2) var(--space-4);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            transition: all var(--transition-fast);
+        }
+
+        .back-link:hover {
+            background: var(--gray-50);
+            color: var(--gray-900);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+        }
+
+        .table th,
+        .table td {
+            padding: var(--space-4);
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .table th {
+            background: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: var(--font-size-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .table tr:hover {
+            background: var(--gray-50);
+        }
+
+        .status-issued {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            font-size: var(--font-size-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-returned {
+            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+            color: #0c5460;
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            font-size: var(--font-size-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-overdue {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            font-size: var(--font-size-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--space-12);
+            color: var(--gray-500);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: var(--space-4);
+            opacity: 0.5;
+        }
+
+        .alert {
+            padding: var(--space-4);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-6);
+            font-size: var(--font-size-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: var(--space-4);
+            }
+
+            .header {
+                padding: var(--space-4) var(--space-6);
+            }
+
+            .table {
+                font-size: var(--font-size-sm);
+            }
+
+            .table th,
+            .table td {
+                padding: var(--space-2) var(--space-3);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1 class="title">👥 Student Book History</h1>
+        <p class="subtitle">View individual student library transactions</p>
+    </header>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div style="max-width: 1200px; margin: 0 auto; padding: 0 var(--space-8);">
+                {% for message in messages %}
+                    <div class="alert alert-success" style="margin-bottom: var(--space-4);">
+                        <span>✓</span>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="container">
+        <a href="/library_dashboard" class="back-link">← Back to Library Dashboard</a>
+
+        {% if student_id %}
+            <div class="alert alert-info">
+                <span>🔍</span>
+                Showing history for student: <strong>{{ student_id }}</strong>
+            </div>
+        {% endif %}
+
+        {% if student_transactions %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Transaction ID</th>
+                        <th>Book</th>
+                        <th>Author</th>
+                        <th>Issue Date</th>
+                        <th>Due Date</th>
+                        <th>Return Date</th>
+                        <th>Status</th>
+                        <th>Fine</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaction in student_transactions %}
+                    <tr>
+                        <td>{{ transaction.transaction_id }}</td>
+                        <td>{{ transaction.book_title }}</td>
+                        <td>{{ transaction.book_author }}</td>
+                        <td>{{ transaction.issue_date.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ transaction.due_date.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ transaction.return_date.strftime('%Y-%m-%d') if transaction.return_date else 'N/A' }}</td>
+                        <td>
+                            <span class="status-{{ transaction.status }}">
+                                {{ transaction.status.title() }}
+                            </span>
+                        </td>
+                        <td>₹{{ transaction.fine_amount }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">📚</div>
+                <h3>No Book History Found</h3>
+                {% if student_id %}
+                    <p>No library transactions found for student: <strong>{{ student_id }}</strong></p>
+                {% else %}
+                    <p>Search for a student to view their book history.</p>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

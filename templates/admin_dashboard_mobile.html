@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard - ByteCredits</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='ICON.png') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <style>
+        /* Mobile-First Responsive Admin Dashboard */
+        
+        /* 1. VISUAL HIERARCHY - Clear information architecture */
+        .admin-container {
+            min-height: 100vh;
+            background: var(--gray-50);
+            padding: 0;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* 2. CONSISTENCY - Unified design language */
+        .admin-header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: var(--space-4);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .admin-title {
+            font-size: var(--font-size-xl);
+            font-weight: var(--font-bold);
+            margin: 0;
+            text-align: center;
+        }
+
+        .admin-subtitle {
+            font-size: var(--font-size-sm);
+            opacity: 0.9;
+            text-align: center;
+            margin-top: var(--space-1);
+        }
+
+        /* 3. SIMPLICITY - Clean, uncluttered interface */
+        .admin-content {
+            padding: var(--space-4);
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        /* 4. NAVIGATION - Intuitive mobile navigation */
+        .mobile-nav {
+            display: flex;
+            justify-content: space-around;
+            background: white;
+            padding: var(--space-3);
+            border-bottom: 1px solid var(--gray-200);
+            position: sticky;
+            top: 80px;
+            z-index: 99;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: var(--space-2);
+            border-radius: var(--radius-lg);
+            text-decoration: none;
+            color: var(--gray-600);
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-medium);
+            transition: all var(--transition-normal);
+            min-width: 60px;
+        }
+
+        .nav-item.active {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .nav-item:hover {
+            background: var(--gray-100);
+            transform: translateY(-2px);
+        }
+
+        .nav-icon {
+            font-size: var(--font-size-lg);
+            margin-bottom: var(--space-1);
+        }
+
+        /* 5. RESPONSIVE DESIGN - Mobile-first approach */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+
+        .stat-card {
+            background: white;
+            padding: var(--space-4);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            text-align: center;
+            transition: all var(--transition-normal);
+        }
+
+        .stat-card:active {
+            transform: scale(0.98);
+        }
+
+        .stat-number {
+            font-size: var(--font-size-2xl);
+            font-weight: var(--font-bold);
+            color: var(--gray-900);
+            margin-bottom: var(--space-1);
+        }
+
+        .stat-label {
+            font-size: var(--font-size-sm);
+            color: var(--gray-600);
+            font-weight: var(--font-medium);
+        }
+
+        .stat-change {
+            font-size: var(--font-size-xs);
+            margin-top: var(--space-1);
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-full);
+            font-weight: var(--font-medium);
+        }
+
+        .stat-change.positive {
+            background: var(--success-light);
+            color: var(--success);
+        }
+
+        .stat-change.negative {
+            background: var(--danger-light);
+            color: var(--danger);
+        }
+
+        /* 6. ACCESSIBILITY - Touch-friendly interface */
+        .action-button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--radius-lg);
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-medium);
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            min-height: 44px; /* iOS touch target minimum */
+            min-width: 44px;
+        }
+
+        .action-button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .action-button:active {
+            transform: translateY(0);
+        }
+
+        /* 7. PERFORMANCE - Optimized for mobile */
+        .chart-container {
+            background: white;
+            padding: var(--space-4);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: var(--space-4);
+            height: 300px;
+        }
+
+        .chart-title {
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-semibold);
+            color: var(--gray-900);
+            margin-bottom: var(--space-4);
+            text-align: center;
+        }
+
+        /* 8. FEEDBACK - Clear user feedback */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: var(--space-8);
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--gray-200);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 9. ERROR HANDLING - Graceful error states */
+        .error-message {
+            background: var(--danger-light);
+            color: var(--danger);
+            padding: var(--space-3);
+            border-radius: var(--radius-lg);
+            margin: var(--space-4) 0;
+            text-align: center;
+            font-size: var(--font-size-sm);
+        }
+
+        /* 10. LOADING STATES - Smooth transitions */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 11. DATA VISUALIZATION - Mobile-optimized charts */
+        .data-table {
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            margin-bottom: var(--space-4);
+        }
+
+        .table-header {
+            background: var(--gray-50);
+            padding: var(--space-3);
+            font-weight: var(--font-semibold);
+            color: var(--gray-700);
+            font-size: var(--font-size-sm);
+        }
+
+        .table-content {
+            max-height: 400px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .table-row {
+            padding: var(--space-3);
+            border-bottom: 1px solid var(--gray-100);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: var(--font-size-sm);
+        }
+
+        .table-row:last-child {
+            border-bottom: none;
+        }
+
+        .table-row:hover {
+            background: var(--gray-50);
+        }
+
+        /* 12. MOBILE OPTIMIZATIONS - Touch and scroll improvements */
+        .scroll-container {
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+        }
+
+        .touch-action {
+            touch-action: manipulation;
+        }
+
+        /* Responsive breakpoints */
+        @media (min-width: 640px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .admin-content {
+                padding: var(--space-6);
+            }
+        }
+
+        @media (min-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .mobile-nav {
+                display: none;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            .admin-content {
+                max-width: 1200px;
+            }
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            .admin-container {
+                background: var(--dark);
+            }
+            
+            .stat-card, .chart-container, .data-table {
+                background: var(--gray-800);
+                color: white;
+            }
+            
+            .table-header {
+                background: var(--gray-700);
+            }
+        }
+
+        /* High contrast mode */
+        @media (prefers-contrast: high) {
+            .stat-card, .chart-container, .data-table {
+                border: 2px solid var(--gray-900);
+            }
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Header -->
+        <header class="admin-header">
+            <h1 class="admin-title">Admin Dashboard</h1>
+            <p class="admin-subtitle">ByteCredits Management System</p>
+        </header>
+
+        <!-- Mobile Navigation -->
+        <nav class="mobile-nav">
+            <a href="#overview" class="nav-item active" data-section="overview">
+                <div class="nav-icon">📊</div>
+                <span>Overview</span>
+            </a>
+            <a href="#users" class="nav-item" data-section="users">
+                <div class="nav-icon">👥</div>
+                <span>Users</span>
+            </a>
+            <a href="#transactions" class="nav-item" data-section="transactions">
+                <div class="nav-icon">💳</div>
+                <span>Transactions</span>
+            </a>
+            <a href="#payments" class="nav-item" data-section="payments">
+                <div class="nav-icon">💰</div>
+                <span>Payments</span>
+            </a>
+            <a href="#settings" class="nav-item" data-section="settings">
+                <div class="nav-icon">⚙️</div>
+                <span>Settings</span>
+            </a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="admin-content">
+            <!-- Overview Section -->
+            <section id="overview" class="content-section active">
+                <!-- Statistics Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card fade-in">
+                        <div class="stat-number">{{ total_users }}</div>
+                        <div class="stat-label">Total Users</div>
+                        <div class="stat-change positive">+12% this month</div>
+                    </div>
+                    
+                    <div class="stat-card fade-in">
+                        <div class="stat-number">{{ total_transactions }}</div>
+                        <div class="stat-label">Transactions</div>
+                        <div class="stat-change positive">+8% this week</div>
+                    </div>
+                    
+                    <div class="stat-card fade-in">
+                        <div class="stat-number">₹{{ total_amount }}</div>
+                        <div class="stat-label">Total Revenue</div>
+                        <div class="stat-change positive">+15% this month</div>
+                    </div>
+                    
+                    <div class="stat-card fade-in">
+                        <div class="stat-number">{{ pending_payments }}</div>
+                        <div class="stat-label">Pending Payments</div>
+                        <div class="stat-change negative">Needs attention</div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="chart-container">
+                    <h3 class="chart-title">Revenue Trend</h3>
+                    <canvas id="revenueChart"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <h3 class="chart-title">User Growth</h3>
+                    <canvas id="userChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Users Section -->
+            <section id="users" class="content-section">
+                <div class="data-table">
+                    <div class="table-header">Recent Users</div>
+                    <div class="table-content scroll-container">
+                        {% for user in users[:10] %}
+                        <div class="table-row">
+                            <div>
+                                <div style="font-weight: var(--font-semibold);">{{ user.username }}</div>
+                                <div style="color: var(--gray-500); font-size: var(--font-size-xs);">{{ user.email }}</div>
+                            </div>
+                            <div>
+                                <span style="background: var(--primary-light); color: var(--primary); padding: var(--space-1) var(--space-2); border-radius: var(--radius-full); font-size: var(--font-size-xs);">{{ user.role }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+            <!-- Transactions Section -->
+            <section id="transactions" class="content-section">
+                <div class="data-table">
+                    <div class="table-header">Recent Transactions</div>
+                    <div class="table-content scroll-container">
+                        {% for transaction in transactions[:10] %}
+                        <div class="table-row">
+                            <div>
+                                <div style="font-weight: var(--font-semibold);">{{ transaction.from_user }} → {{ transaction.to_user }}</div>
+                                <div style="color: var(--gray-500); font-size: var(--font-size-xs);">{{ transaction.date.strftime('%Y-%m-%d %H:%M') if transaction.date else 'N/A' }}</div>
+                            </div>
+                            <div style="font-weight: var(--font-semibold); color: var(--success);">₹{{ transaction.amount }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+            <!-- Payments Section -->
+            <section id="payments" class="content-section">
+                <div class="data-table">
+                    <div class="table-header">Payment Proofs</div>
+                    <div class="table-content scroll-container">
+                        {% for payment in payment_proofs[:10] %}
+                        <div class="table-row">
+                            <div>
+                                <div style="font-weight: var(--font-semibold);">{{ payment.username }}</div>
+                                <div style="color: var(--gray-500); font-size: var(--font-size-xs);">{{ payment.submitted_at.strftime('%Y-%m-%d') if payment.submitted_at else 'N/A' }}</div>
+                            </div>
+                            <div>
+                                <div style="font-weight: var(--font-semibold);">₹{{ payment.amount }}</div>
+                                <span style="background: {% if payment.status == 'approved' %}var(--success-light){% elif payment.status == 'rejected' %}var(--danger-light){% else %}var(--warning-light){% endif %}; color: {% if payment.status == 'approved' %}var(--success){% elif payment.status == 'rejected' %}var(--danger){% else %}var(--warning){% endif %}; padding: var(--space-1) var(--space-2); border-radius: var(--radius-full); font-size: var(--font-size-xs);">{{ payment.status }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings" class="content-section">
+                <div class="stat-card">
+                    <h3 style="margin-bottom: var(--space-4);">Quick Actions</h3>
+                    <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                        <button class="action-button touch-action">Approve Payments</button>
+                        <button class="action-button touch-action">Export Data</button>
+                        <button class="action-button touch-action">System Settings</button>
+                        <button class="action-button touch-action">User Management</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Mobile-optimized JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. Smooth scrolling for mobile
+            const navItems = document.querySelectorAll('.nav-item');
+            const sections = document.querySelectorAll('.content-section');
+            
+            navItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all items
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    sections.forEach(section => section.classList.remove('active'));
+                    
+                    // Add active class to clicked item
+                    this.classList.add('active');
+                    
+                    // Show corresponding section
+                    const targetSection = this.getAttribute('data-section');
+                    const targetElement = document.getElementById(targetSection);
+                    if (targetElement) {
+                        targetElement.classList.add('active');
+                        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            });
+
+            // 2. Initialize charts with mobile optimization
+            initializeCharts();
+            
+            // 3. Touch gesture handling
+            let startY = 0;
+            let currentY = 0;
+            let isScrolling = false;
+            
+            document.addEventListener('touchstart', function(e) {
+                startY = e.touches[0].clientY;
+                isScrolling = true;
+            }, { passive: true });
+            
+            document.addEventListener('touchmove', function(e) {
+                if (!isScrolling) return;
+                currentY = e.touches[0].clientY;
+            }, { passive: true });
+            
+            document.addEventListener('touchend', function(e) {
+                isScrolling = false;
+            }, { passive: true });
+
+            // 4. Performance optimization
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('fade-in');
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.stat-card, .chart-container, .data-table').forEach(el => {
+                observer.observe(el);
+            });
+        });
+
+        function initializeCharts() {
+            // Revenue Chart
+            const revenueCtx = document.getElementById('revenueChart');
+            if (revenueCtx) {
+                new Chart(revenueCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'Revenue',
+                            data: {{ daily_revenue|tojson }},
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // User Growth Chart
+            const userCtx = document.getElementById('userChart');
+            if (userCtx) {
+                new Chart(userCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'New Users',
+                            data: {{ daily_user_growth|tojson }},
+                            backgroundColor: '#10b981',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>

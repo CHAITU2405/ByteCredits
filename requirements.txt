@@ -1,0 +1,27 @@
+# ByteCredits - Educational Management System Requirements
+# Core Flask Framework
+flask==3.1.1
+flask-sqlalchemy==3.1.1
+
+# Database and Data Processing
+pandas==2.3.2
+openpyxl==3.1.5
+
+# AI and Machine Learning
+google-generativeai==0.8.5
+
+# PDF Processing
+pypdf==6.1.0
+PyPDF2==3.0.1
+pdfminer.six==20250506
+
+# Report Generation
+reportlab==4.4.4
+
+# NFC and Hardware Integration
+nfcpy==1.0.4
+pyserial==3.5
+
+# Additional Dependencies
+requests>=2.18.0
+cryptography>=36.0.0

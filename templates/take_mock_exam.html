@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Take Mock Exam - ByteCredits</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Take Exam Specific Styles */
+        .exam-header {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--gray-200);
+            margin-bottom: var(--space-6);
+            position: sticky;
+            top: var(--space-4);
+            z-index: 100;
+        }
+        
+        .exam-instructions {
+            background: var(--blue-50);
+            border: 1px solid var(--blue-200);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+        }
+        
+        .exam-instructions h3 {
+            color: var(--blue-700);
+            margin-bottom: var(--space-3);
+            font-size: var(--text-lg);
+        }
+        
+        .exam-instructions p {
+            color: var(--blue-600);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .exam-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: var(--space-4);
+        }
+
+        .exam-title {
+            font-size: var(--text-2xl);
+            font-weight: var(--font-bold);
+            color: var(--gray-900);
+            margin: 0;
+        }
+
+        .exam-details {
+            display: flex;
+            gap: var(--space-6);
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .exam-detail {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            color: var(--gray-600);
+            font-size: var(--text-sm);
+        }
+
+        .timer {
+            background: var(--primary);
+            color: var(--white);
+            padding: var(--space-2) var(--space-4);
+            border-radius: var(--radius-full);
+            font-weight: var(--font-bold);
+            font-size: var(--text-lg);
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .timer.warning {
+            background: var(--warning);
+            animation: pulse 1s infinite;
+        }
+
+        .timer.danger {
+            background: var(--danger);
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .exam-container {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: var(--space-8);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            margin-bottom: var(--space-6);
+        }
+
+        .question {
+            margin-bottom: var(--space-8);
+            padding-bottom: var(--space-6);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .question:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--space-4);
+            gap: var(--space-4);
+        }
+
+        .question-number {
+            background: var(--primary);
+            color: var(--white);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: var(--font-bold);
+            font-size: var(--text-lg);
+            flex-shrink: 0;
+        }
+
+        .question-content {
+            flex: 1;
+        }
+
+        .question-text {
+            font-size: var(--text-lg);
+            font-weight: var(--font-semibold);
+            color: var(--gray-900);
+            margin-bottom: var(--space-3);
+            line-height: var(--line-height-relaxed);
+        }
+
+        .question-meta {
+            display: flex;
+            gap: var(--space-4);
+            align-items: center;
+            margin-bottom: var(--space-4);
+        }
+
+        .question-type {
+            background: var(--info-light);
+            color: var(--info-dark);
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-full);
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+        }
+
+        .question-marks {
+            color: var(--gray-600);
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+        }
+
+        .options {
+            margin-top: var(--space-4);
+        }
+
+        .option {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3);
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-2);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .option:hover {
+            border-color: var(--primary-light);
+            background: var(--primary-light);
+        }
+
+        .option.selected {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .option input[type="radio"] {
+            margin: 0;
+            width: 18px;
+            height: 18px;
+        }
+
+        .option-label {
+            font-weight: var(--font-medium);
+            color: var(--gray-700);
+        }
+
+        .answer-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: var(--space-4);
+            border: 2px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            font-size: var(--text-base);
+            font-family: inherit;
+            resize: vertical;
+            transition: all var(--transition-fast);
+        }
+
+        .answer-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .exam-actions {
+            position: sticky;
+            bottom: var(--space-4);
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--space-4);
+        }
+
+        .progress-info {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 8px;
+            background: var(--gray-200);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            transition: width var(--transition-normal);
+        }
+
+        .progress-text {
+            font-size: var(--text-sm);
+            color: var(--gray-600);
+            font-weight: var(--font-medium);
+        }
+
+        .btn {
+            padding: var(--space-3) var(--space-6);
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: var(--text-base);
+            font-weight: var(--font-semibold);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            min-height: 48px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-icon {
+            font-size: var(--text-lg);
+        }
+
+        /* Section-based exam styles */
+        .section-header {
+            background: var(--primary-light);
+            border: 2px solid var(--primary);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            margin-bottom: var(--space-6);
+            text-align: center;
+        }
+
+        .section-title {
+            font-size: var(--text-2xl);
+            font-weight: var(--font-bold);
+            color: var(--primary-dark);
+            margin-bottom: var(--space-2);
+        }
+
+        .section-marks {
+            color: var(--primary-dark);
+            font-weight: var(--font-semibold);
+            margin-bottom: var(--space-2);
+            font-size: var(--text-lg);
+        }
+
+        .section-info {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-4);
+            align-items: center;
+            margin-bottom: var(--space-2);
+        }
+        
+        .section-instructions {
+            background: var(--white);
+            border: 1px solid var(--primary);
+            border-radius: var(--radius-md);
+            padding: var(--space-3);
+            margin-top: var(--space-2);
+            text-align: left;
+        }
+        
+        .section-instructions p {
+            margin: 0;
+            color: var(--gray-700);
+            font-size: var(--text-sm);
+        }
+
+        .section-type {
+            background: var(--primary);
+            color: var(--white);
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-full);
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+        }
+
+        .section-count {
+            color: var(--primary-dark);
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+        }
+
+        .internal-choice {
+            background: var(--warning-light);
+            color: var(--warning-dark);
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-full);
+            font-size: var(--text-xs);
+            font-weight: var(--font-medium);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .exam-info {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .exam-details {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-2);
+            }
+
+            .exam-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .progress-info {
+                justify-content: center;
+            }
+
+            .progress-bar {
+                width: 150px;
+            }
+
+            .question-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .question-meta {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-2);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Exam Header -->
+        <div class="exam-header">
+            <div class="exam-info">
+                <div>
+                    <h1 class="exam-title">{{ questions.get('exam_title', exam.subject_name) }}</h1>
+                    <div class="exam-details">
+                        <div class="exam-detail">
+                            <span>📝</span>
+                            <span>{{ exam.total_questions }} Questions</span>
+                        </div>
+                        <div class="exam-detail">
+                            <span>🏆</span>
+                            <span>{{ exam.total_marks }} Marks</span>
+                        </div>
+                        <div class="exam-detail">
+                            <span>⏱️</span>
+                            <span>{{ exam.time_limit }} Minutes</span>
+                        </div>
+                        <div class="exam-detail">
+                            <span>📋</span>
+                            <span>{{ exam.question_format.replace('_', ' ').title() }}</span>
+                        </div>
+                        <div class="exam-detail">
+                            <span>🎯</span>
+                            <span>{{ exam.difficulty_level.title() }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="timer" id="timer">
+                    <span id="timeDisplay">{{ exam.time_limit }}:00</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Exam Instructions -->
+        {% if questions.get('instructions') %}
+        <div class="exam-instructions">
+            <h3>📋 Instructions</h3>
+            <p>{{ questions.instructions }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Exam Form -->
+        <form id="examForm" method="POST" action="/submit_mock_exam/{{ exam.exam_id }}">
+            <div class="exam-container">
+                {% if exam.question_format == 'section_based' and questions.sections %}
+                    <!-- Section-based questions -->
+                    {% for section in questions.sections %}
+                        <div class="section-header">
+                            <h2 class="section-title">{{ section.section_name }}</h2>
+                            {% if section.section_info %}
+                            <div class="section-marks">{{ section.section_info }}</div>
+                            {% endif %}
+                            <div class="section-info">
+                                <span class="section-type">{{ section.section_type.replace('_', ' ').title() }}</span>
+                                <span class="section-count">{{ section.questions|length }} questions</span>
+                            </div>
+                            {% if section.instructions %}
+                            <div class="section-instructions">
+                                <p><strong>Instructions:</strong> {{ section.instructions }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        {% for question in section.questions %}
+                            <div class="question" data-question-id="{{ question.id }}" data-section="{{ section.section_name }}">
+                                <div class="question-header">
+                                    <div class="question-number">{{ loop.index }}</div>
+                                    <div class="question-content">
+                                        <div class="question-meta">
+                                            <span class="question-type">{{ question.type.replace('_', ' ').title() }}</span>
+                                            <span class="question-marks">{{ question.marks }} marks</span>
+                                            {% if question.internal_choice %}
+                                                <span class="internal-choice">🔄 Internal Choice</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="question-text">{{ question.question }}</div>
+                                    </div>
+                                </div>
+
+                                {% if question.type == 'multiple_choice' %}
+                                    <div class="options">
+                                        {% for option in question.options %}
+                                            <label class="option" for="answer_{{ question.id }}_{{ loop.index0 }}">
+                                                <input type="radio" 
+                                                       id="answer_{{ question.id }}_{{ loop.index0 }}"
+                                                       name="answer_{{ question.id }}" 
+                                                       value="{{ option }}"
+                                                       onchange="updateProgress()">
+                                                <span class="option-label">{{ option }}</span>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                {% elif question.type == 'short_answer' %}
+                                    <input type="text" 
+                                           name="answer_{{ question.id }}" 
+                                           class="form-input" 
+                                           placeholder="Write your short answer here..."
+                                           onchange="updateProgress()"
+                                           style="width: 100%; padding: var(--space-3); border: 2px solid var(--gray-300); border-radius: var(--radius-md); font-size: var(--text-base);">
+                                {% else %}
+                                    <textarea name="answer_{{ question.id }}" 
+                                              class="answer-textarea" 
+                                              placeholder="Write your detailed answer here..."
+                                              onchange="updateProgress()"></textarea>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+                {% else %}
+                    <!-- Regular questions -->
+                    {% for question in questions %}
+                        <div class="question" data-question-id="{{ question.id }}">
+                            <div class="question-header">
+                                <div class="question-number">{{ loop.index }}</div>
+                                <div class="question-content">
+                                    <div class="question-meta">
+                                        <span class="question-type">{{ question.type.replace('_', ' ').title() }}</span>
+                                        <span class="question-marks">{{ question.marks }} marks</span>
+                                    </div>
+                                    <div class="question-text">{{ question.question }}</div>
+                                </div>
+                            </div>
+
+                            {% if question.type == 'multiple_choice' %}
+                                <div class="options">
+                                    {% for option in question.options %}
+                                        <label class="option" for="answer_{{ question.id }}_{{ loop.index0 }}">
+                                            <input type="radio" 
+                                                   id="answer_{{ question.id }}_{{ loop.index0 }}"
+                                                   name="answer_{{ question.id }}" 
+                                                   value="{{ option }}"
+                                                   onchange="updateProgress()">
+                                            <span class="option-label">{{ option }}</span>
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                            {% elif question.type == 'short_answer' %}
+                                <input type="text" 
+                                       name="answer_{{ question.id }}" 
+                                       class="form-input" 
+                                       placeholder="Write your short answer here..."
+                                       onchange="updateProgress()"
+                                       style="width: 100%; padding: var(--space-3); border: 2px solid var(--gray-300); border-radius: var(--radius-md); font-size: var(--text-base);">
+                            {% else %}
+                                <textarea name="answer_{{ question.id }}" 
+                                          class="answer-textarea" 
+                                          placeholder="Write your detailed answer here..."
+                                          onchange="updateProgress()"></textarea>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <!-- Exam Actions -->
+            <div class="exam-actions">
+                <div class="progress-info">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">0% Complete</div>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-outline" onclick="saveProgress()">
+                        <span class="btn-icon">💾</span>
+                        Save Progress
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn" onclick="return confirmSubmit()">
+                        <span class="btn-icon">📤</span>
+                        Submit Exam
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Timer functionality
+        let timeLeft = {{ exam.time_limit * 60 }}; // Convert minutes to seconds
+        let timerInterval;
+        let examStarted = false;
+
+        function startTimer() {
+            if (examStarted) return;
+            examStarted = true;
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    autoSubmitExam();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            const timeDisplay = document.getElementById('timeDisplay');
+            const timer = document.getElementById('timer');
+            
+            timeDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Change timer color based on remaining time
+            if (timeLeft <= 300) { // 5 minutes
+                timer.classList.add('danger');
+            } else if (timeLeft <= 600) { // 10 minutes
+                timer.classList.add('warning');
+            }
+        }
+
+        function autoSubmitExam() {
+            alert('Time\'s up! Your exam will be submitted automatically.');
+            document.getElementById('examForm').submit();
+        }
+
+        // Progress tracking
+        function updateProgress() {
+            let totalQuestions = 0;
+            let answeredQuestions = 0;
+            
+            // Count total questions
+            document.querySelectorAll('.question').forEach(question => {
+                totalQuestions++;
+            });
+            
+            // Count answered questions
+            document.querySelectorAll('input[type="radio"]:checked, textarea, input[type="text"]').forEach(element => {
+                if (element.type === 'radio' || element.value.trim() !== '') {
+                    answeredQuestions++;
+                }
+            });
+            
+            const progress = totalQuestions > 0 ? (answeredQuestions / totalQuestions) * 100 : 0;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+            document.getElementById('progressText').textContent = `${Math.round(progress)}% Complete`;
+        }
+
+        // Save progress to localStorage
+        function saveProgress() {
+            const formData = new FormData(document.getElementById('examForm'));
+            const answers = {};
+            
+            for (let [key, value] of formData.entries()) {
+                if (key.startsWith('answer_')) {
+                    answers[key] = value;
+                }
+            }
+            
+            localStorage.setItem('examProgress_{{ exam.exam_id }}', JSON.stringify(answers));
+            showNotification('Progress saved!', 'success');
+        }
+
+        // Load saved progress
+        function loadProgress() {
+            const savedAnswers = localStorage.getItem('examProgress_{{ exam.exam_id }}');
+            if (savedAnswers) {
+                const answers = JSON.parse(savedAnswers);
+                
+                Object.entries(answers).forEach(([key, value]) => {
+                    const element = document.querySelector(`[name="${key}"]`);
+                    if (element) {
+                        if (element.type === 'radio') {
+                            const radio = document.querySelector(`[name="${key}"][value="${value}"]`);
+                            if (radio) radio.checked = true;
+                        } else {
+                            element.value = value;
+                        }
+                    }
+                });
+                
+                updateProgress();
+            }
+        }
+
+        // Form submission confirmation
+        function confirmSubmit() {
+            let totalQuestions = 0;
+            let answeredQuestions = 0;
+            
+            // Count total questions
+            document.querySelectorAll('.question').forEach(question => {
+                totalQuestions++;
+            });
+            
+            // Count answered questions
+            document.querySelectorAll('input[type="radio"]:checked, textarea, input[type="text"]').forEach(element => {
+                if (element.type === 'radio' || element.value.trim() !== '') {
+                    answeredQuestions++;
+                }
+            });
+            
+            if (answeredQuestions < totalQuestions) {
+                const unanswered = totalQuestions - answeredQuestions;
+                if (!confirm(`You have ${unanswered} unanswered questions. Are you sure you want to submit?`)) {
+                    return false;
+                }
+            }
+            
+            // Add time taken to form
+            const timeTaken = {{ exam.time_limit * 60 }} - timeLeft;
+            const timeInput = document.createElement('input');
+            timeInput.type = 'hidden';
+            timeInput.name = 'time_taken';
+            timeInput.value = Math.floor(timeTaken / 60); // Convert to minutes
+            document.getElementById('examForm').appendChild(timeInput);
+            
+            return true;
+        }
+
+        // Notification system
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <span class="notification-icon">${type === 'success' ? '✓' : '⚠'}</span>
+                <span class="notification-message">${message}</span>
+            `;
+            
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? 'var(--success)' : 'var(--warning)'};
+                color: white;
+                padding: var(--space-3) var(--space-4);
+                border-radius: var(--radius-md);
+                box-shadow: var(--shadow-lg);
+                z-index: 1000;
+                display: flex;
+                align-items: center;
+                gap: var(--space-2);
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Enhanced interactions
+        function enhanceInteractions() {
+            // Add click handlers for option selection
+            document.querySelectorAll('.option').forEach(option => {
+                option.addEventListener('click', function() {
+                    const radio = this.querySelector('input[type="radio"]');
+                    if (radio) {
+                        radio.checked = true;
+                        updateProgress();
+                    }
+                });
+            });
+
+            // Auto-save progress every 30 seconds
+            setInterval(saveProgress, 30000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            enhanceInteractions();
+            loadProgress();
+            startTimer();
+            updateProgress();
+        });
+
+        // Prevent accidental page refresh
+        window.addEventListener('beforeunload', function(e) {
+            if (examStarted && timeLeft > 0) {
+                e.preventDefault();
+                e.returnValue = 'Your exam progress will be lost. Are you sure you want to leave?';
+            }
+        });
+    </script>
+</body>
+</html>

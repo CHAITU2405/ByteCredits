@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Analytical Dashboard - ByteCredits Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='mobile.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='ICON.png') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <style>
+        /* Analytical Dashboard Styles */
+        .analytical-container {
+            min-height: 100vh;
+            background: var(--gray-50);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header with Toggle Button */
+        .analytical-header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: var(--space-4);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+        }
+
+        .sidebar-toggle {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: var(--space-2);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            font-size: var(--font-size-lg);
+            transition: all var(--transition-normal);
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .header-title {
+            font-size: var(--font-size-xl);
+            font-weight: var(--font-bold);
+            margin: 0;
+        }
+
+        .header-subtitle {
+            font-size: var(--font-size-sm);
+            opacity: 0.9;
+            margin: 0;
+        }
+
+        /* Sidebar */
+        .admin-sidebar {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 300px;
+            height: 100vh;
+            background: white;
+            box-shadow: var(--shadow-2xl);
+            transition: left var(--transition-normal);
+            z-index: 999;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .admin-sidebar.open {
+            left: 0;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            opacity: 0;
+            visibility: hidden;
+            transition: all var(--transition-normal);
+        }
+
+        .sidebar-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .sidebar-header {
+            padding: var(--space-6);
+            background: var(--primary-gradient);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-title {
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-bold);
+            margin: 0;
+        }
+
+        .sidebar-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: var(--space-2);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            font-size: var(--font-size-lg);
+            transition: all var(--transition-normal);
+        }
+
+        .sidebar-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .sidebar-content {
+            padding: var(--space-4);
+        }
+
+        .sidebar-section {
+            margin-bottom: var(--space-6);
+        }
+
+        .sidebar-section-title {
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-semibold);
+            color: var(--gray-600);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: var(--space-3);
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            padding: var(--space-3);
+            border-radius: var(--radius-lg);
+            text-decoration: none;
+            color: var(--gray-700);
+            transition: all var(--transition-normal);
+            margin-bottom: var(--space-1);
+        }
+
+        .sidebar-item:hover {
+            background: var(--gray-100);
+            color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .sidebar-item.active {
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: var(--font-semibold);
+        }
+
+        .sidebar-icon {
+            font-size: var(--font-size-lg);
+            margin-right: var(--space-3);
+            width: 24px;
+            text-align: center;
+        }
+
+        .sidebar-text {
+            flex: 1;
+        }
+
+        .sidebar-badge {
+            background: var(--danger);
+            color: white;
+            font-size: var(--font-size-xs);
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-full);
+            font-weight: var(--font-semibold);
+        }
+
+        /* Main Content */
+        .analytical-content {
+            flex: 1;
+            padding: var(--space-6);
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Analytics Cards - 4 cards in a row */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-4);
+            margin-bottom: var(--space-8);
+        }
+
+        .analytics-card {
+            background: white;
+            padding: var(--space-6);
+            border-radius: var(--radius-2xl);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--gray-200);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border-top: 4px solid transparent;
+            background-clip: padding-box;
+        }
+
+        .analytics-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .analytics-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+        }
+
+        .analytics-card:nth-child(1)::before {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .analytics-card:nth-child(2)::before {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .analytics-card:nth-child(3)::before {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .analytics-card:nth-child(4)::before {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--space-6);
+        }
+
+        .card-title {
+            font-size: var(--font-size-base);
+            font-weight: var(--font-semibold);
+            color: var(--gray-700);
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-xl);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            color: var(--primary);
+        }
+
+        .card-value {
+            font-size: var(--font-size-4xl);
+            font-weight: var(--font-bold);
+            color: var(--gray-900);
+            margin-bottom: var(--space-3);
+            line-height: 1;
+            letter-spacing: -0.025em;
+        }
+
+        .card-change {
+            display: flex;
+            align-items: center;
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-medium);
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-full);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .card-change.positive {
+            color: var(--success);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .card-change.negative {
+            color: var(--danger);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .card-change-icon {
+            margin-right: var(--space-1);
+            font-size: var(--font-size-xs);
+        }
+
+        /* Charts Container - 2 charts per row */
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-6);
+            margin-bottom: var(--space-6);
+        }
+
+        /* Desktop Layout - Enhanced spacing for larger screens */
+        @media (min-width: 1200px) {
+            .charts-container {
+                gap: var(--space-8);
+            }
+            
+            .chart-container {
+                height: 450px;
+            }
+        }
+
+        /* Tablet - Keep 2 charts per row */
+        @media (max-width: 991px) and (min-width: 769px) {
+            .charts-container {
+                grid-template-columns: repeat(2, 1fr);
+                gap: var(--space-4);
+            }
+            
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        /* Charts */
+        .chart-section {
+            background: white;
+            padding: var(--space-6);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 0;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-6);
+        }
+
+        .chart-title {
+            font-size: var(--font-size-xl);
+            font-weight: var(--font-bold);
+            color: var(--gray-900);
+            margin: 0;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+        }
+
+        /* Recent Activity */
+        .activity-section {
+            background: white;
+            padding: var(--space-6);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            padding: var(--space-4);
+            border-bottom: 1px solid var(--gray-100);
+            transition: all var(--transition-normal);
+        }
+
+        .activity-item:hover {
+            background: var(--gray-50);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: var(--space-4);
+            font-size: var(--font-size-lg);
+        }
+
+        .activity-icon.success {
+            background: var(--success-light);
+            color: var(--success);
+        }
+
+        .activity-icon.warning {
+            background: var(--warning-light);
+            color: var(--warning);
+        }
+
+        .activity-icon.info {
+            background: var(--info-light);
+            color: var(--info);
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-semibold);
+            color: var(--gray-900);
+            margin: 0 0 var(--space-1) 0;
+        }
+
+        .activity-description {
+            font-size: var(--font-size-sm);
+            color: var(--gray-600);
+            margin: 0;
+        }
+
+        .activity-time {
+            font-size: var(--font-size-xs);
+            color: var(--gray-500);
+            margin-left: var(--space-4);
+        }
+
+        /* Large Desktop - 4 cards in a row */
+        @media (min-width: 1200px) {
+            .analytics-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: var(--space-6);
+            }
+        }
+
+        /* Desktop - 2x2 grid for cards */
+        @media (max-width: 1199px) and (min-width: 992px) {
+            .analytics-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: var(--space-4);
+            }
+        }
+
+        /* Tablet Responsive */
+        @media (max-width: 991px) {
+            .analytics-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: var(--space-3);
+            }
+            
+            .analytics-card {
+                padding: var(--space-4);
+            }
+            
+            .charts-container {
+                grid-template-columns: repeat(2, 1fr);
+                gap: var(--space-4);
+            }
+            
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .analytical-content {
+                padding: var(--space-4);
+            }
+            
+            .analytics-grid {
+                grid-template-columns: 1fr;
+                gap: var(--space-4);
+            }
+            
+            .analytics-card {
+                padding: var(--space-4);
+            }
+            
+            .charts-container {
+                grid-template-columns: 1fr;
+                gap: var(--space-4);
+            }
+            
+            .chart-section, .activity-section {
+                padding: var(--space-4);
+            }
+            
+            .chart-container {
+                height: 300px;
+            }
+            
+            .admin-sidebar {
+                width: 280px;
+                left: -280px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .analytical-content {
+                padding: var(--space-3);
+            }
+            
+            .analytics-card {
+                padding: var(--space-3);
+            }
+            
+            .chart-section, .activity-section {
+                padding: var(--space-3);
+            }
+            
+            .card-value {
+                font-size: var(--font-size-2xl);
+            }
+            
+            .chart-container {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="analytical-container">
+        <!-- Header -->
+        <header class="analytical-header">
+            <div class="header-left">
+                <button class="sidebar-toggle" onclick="toggleSidebar()">
+                    ☰
+                </button>
+                <div>
+                    <h1 class="header-title">Analytical Dashboard</h1>
+                    <p class="header-subtitle">ByteCredits System Analytics</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+        <!-- Sidebar -->
+        <nav class="admin-sidebar" id="adminSidebar">
+            <div class="sidebar-header">
+                <h2 class="sidebar-title">Admin Panel</h2>
+                <button class="sidebar-close" onclick="closeSidebar()">×</button>
+            </div>
+            <div class="sidebar-content">
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Analytics</div>
+                    <a href="{{ url_for('admin_analytical_dashboard') }}" class="sidebar-item active">
+                        <span class="sidebar-icon">📊</span>
+                        <span class="sidebar-text">Dashboard</span>
+                    </a>
+                    <a href="{{ url_for('admin_old_dashboard') }}" class="sidebar-item">
+                        <span class="sidebar-icon">📈</span>
+                        <span class="sidebar-text">Detailed View</span>
+                    </a>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">User Management</div>
+                    <a href="{{ url_for('admin_users') }}" class="sidebar-item">
+                        <span class="sidebar-icon">👥</span>
+                        <span class="sidebar-text">All Users</span>
+                    </a>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Reports</div>
+                    <a href="{{ url_for('admin_results') }}" class="sidebar-item">
+                        <span class="sidebar-icon">📊</span>
+                        <span class="sidebar-text">Results</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="analytical-content">
+            <!-- Analytics Cards -->
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Total Users</h3>
+                        <span class="card-icon">👥</span>
+                    </div>
+                    <div class="card-value">{{ total_users }}</div>
+                    <div class="card-change positive">
+                        <span class="card-change-icon">↗</span>
+                        <span>+12% this month</span>
+                    </div>
+                </div>
+
+                <div class="analytics-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Total Revenue</h3>
+                        <span class="card-icon">💰</span>
+                    </div>
+                    <div class="card-value">₹{{ total_amount }}</div>
+                    <div class="card-change positive">
+                        <span class="card-change-icon">↗</span>
+                        <span>+15% this month</span>
+                    </div>
+                </div>
+
+                <div class="analytics-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Transactions</h3>
+                        <span class="card-icon">💳</span>
+                    </div>
+                    <div class="card-value">{{ total_transactions }}</div>
+                    <div class="card-change positive">
+                        <span class="card-change-icon">↗</span>
+                        <span>+8% this week</span>
+                    </div>
+                </div>
+
+                <div class="analytics-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Pending Payments</h3>
+                        <span class="card-icon">⏳</span>
+                    </div>
+                    <div class="card-value">{{ pending_payments }}</div>
+                    <div class="card-change negative">
+                        <span class="card-change-icon">↘</span>
+                        <span>Needs attention</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section - Side by Side on PC -->
+            <div class="charts-container">
+                <div class="chart-section">
+                    <div class="chart-header">
+                        <h2 class="chart-title">Revenue Trend</h2>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-section">
+                    <div class="chart-header">
+                        <h2 class="chart-title">User Growth</h2>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="userChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="activity-section">
+                <div class="chart-header">
+                    <h2 class="chart-title">Recent Activity</h2>
+                </div>
+                <div id="recentActivity">
+                    <!-- Activity items will be loaded here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Sidebar functionality
+        function toggleSidebar() {
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('open');
+        }
+
+        function closeSidebar() {
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            sidebar.classList.remove('open');
+            overlay.classList.remove('open');
+        }
+
+        // Close sidebar when clicking outside
+        document.addEventListener('click', function(e) {
+            const sidebar = document.getElementById('adminSidebar');
+            const toggle = document.querySelector('.sidebar-toggle');
+            
+            if (!sidebar.contains(e.target) && !toggle.contains(e.target)) {
+                closeSidebar();
+            }
+        });
+
+        // Initialize charts
+        function initializeCharts() {
+            // Revenue Chart
+            const revenueCtx = document.getElementById('revenueChart');
+            if (revenueCtx) {
+                new Chart(revenueCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'Revenue',
+                            data: {{ daily_revenue|tojson }},
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // User Growth Chart
+            const userCtx = document.getElementById('userChart');
+            if (userCtx) {
+                new Chart(userCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'New Users',
+                            data: {{ daily_user_growth|tojson }},
+                            backgroundColor: '#10b981',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Load recent activity
+        function loadRecentActivity() {
+            const activityContainer = document.getElementById('recentActivity');
+            const activities = [
+                {
+                    icon: 'success',
+                    iconText: '✓',
+                    title: 'New User Registration',
+                    description: 'John Doe registered successfully',
+                    time: '2 minutes ago'
+                },
+                {
+                    icon: 'warning',
+                    iconText: '⚠',
+                    title: 'Payment Pending',
+                    description: 'Payment proof submitted by Jane Smith',
+                    time: '15 minutes ago'
+                },
+                {
+                    icon: 'info',
+                    iconText: 'ℹ',
+                    title: 'System Update',
+                    description: 'Database backup completed',
+                    time: '1 hour ago'
+                },
+                {
+                    icon: 'success',
+                    iconText: '✓',
+                    title: 'Transaction Completed',
+                    description: '₹500 transferred from Alice to Bob',
+                    time: '2 hours ago'
+                }
+            ];
+
+            activityContainer.innerHTML = activities.map(activity => `
+                <div class="activity-item">
+                    <div class="activity-icon ${activity.icon}">
+                        ${activity.iconText}
+                    </div>
+                    <div class="activity-content">
+                        <h4 class="activity-title">${activity.title}</h4>
+                        <p class="activity-description">${activity.description}</p>
+                    </div>
+                    <div class="activity-time">${activity.time}</div>
+                </div>
+            `).join('');
+        }
+
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            loadRecentActivity();
+        });
+    </script>
+</body>
+</html>

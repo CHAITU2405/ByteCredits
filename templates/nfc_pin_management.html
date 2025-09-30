@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NFC Card PIN Management - ByteCredits</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='mobile.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='ICON.png') }}">
+    <style>
+        .pin-container {
+            min-height: 100vh;
+            background: var(--gray-50);
+            padding: var(--space-6);
+        }
+
+        .pin-header {
+            text-align: center;
+            margin-bottom: var(--space-8);
+        }
+
+        .pin-title {
+            font-size: var(--font-size-3xl);
+            font-weight: var(--font-bold);
+            color: var(--gray-900);
+            margin-bottom: var(--space-2);
+        }
+
+        .pin-subtitle {
+            font-size: var(--font-size-lg);
+            color: var(--gray-600);
+        }
+
+        .pin-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: var(--space-6);
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .pin-card {
+            background: white;
+            padding: var(--space-6);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--gray-200);
+            transition: all var(--transition-normal);
+        }
+
+        .pin-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-2xl);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-6);
+        }
+
+        .card-title {
+            font-size: var(--font-size-xl);
+            font-weight: var(--font-bold);
+            color: var(--gray-900);
+            margin: 0;
+        }
+
+        .card-status {
+            padding: var(--space-2) var(--space-3);
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-semibold);
+        }
+
+        .card-status.active {
+            background: var(--success-light);
+            color: var(--success);
+        }
+
+        .card-status.inactive {
+            background: var(--danger-light);
+            color: var(--danger);
+        }
+
+        .card-info {
+            margin-bottom: var(--space-6);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-2) 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-size: var(--font-size-sm);
+            color: var(--gray-600);
+            font-weight: var(--font-medium);
+        }
+
+        .info-value {
+            font-size: var(--font-size-sm);
+            color: var(--gray-900);
+            font-weight: var(--font-semibold);
+        }
+
+        .pin-status {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            margin-bottom: var(--space-4);
+        }
+
+        .pin-status-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-bold);
+        }
+
+        .pin-status-icon.set {
+            background: var(--success-light);
+            color: var(--success);
+        }
+
+        .pin-status-icon.not-set {
+            background: var(--warning-light);
+            color: var(--warning);
+        }
+
+        .pin-actions {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+
+        .pin-btn {
+            padding: var(--space-3) var(--space-4);
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-semibold);
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            min-height: 44px;
+        }
+
+        .pin-btn.primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .pin-btn.primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .pin-btn.secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        .pin-btn.secondary:hover {
+            background: var(--gray-200);
+        }
+
+        .pin-btn.danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .pin-btn.danger:hover {
+            background: var(--danger-hover);
+        }
+
+        .pin-btn.warning {
+            background: var(--warning-light);
+            color: var(--warning);
+            border: 1px solid var(--warning);
+        }
+
+        .pin-btn.warning:hover {
+            background: var(--warning);
+            color: white;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: var(--space-6);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-2xl);
+            max-width: 400px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-4);
+        }
+
+        .modal-title {
+            font-size: var(--font-size-xl);
+            font-weight: var(--font-bold);
+            color: var(--gray-900);
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: var(--font-size-2xl);
+            color: var(--gray-500);
+            cursor: pointer;
+            padding: var(--space-2);
+            border-radius: var(--radius-lg);
+            transition: all var(--transition-normal);
+        }
+
+        .modal-close:hover {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        .form-group {
+            margin-bottom: var(--space-4);
+        }
+
+        .form-label {
+            display: block;
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-semibold);
+            color: var(--gray-700);
+            margin-bottom: var(--space-2);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: var(--space-3);
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            font-size: var(--font-size-base);
+            transition: all var(--transition-normal);
+            box-sizing: border-box;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-input.error {
+            border-color: var(--danger);
+        }
+
+        .form-help {
+            font-size: var(--font-size-xs);
+            color: var(--gray-500);
+            margin-top: var(--space-1);
+        }
+
+        .form-error {
+            font-size: var(--font-size-xs);
+            color: var(--danger);
+            margin-top: var(--space-1);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: var(--space-3);
+            justify-content: flex-end;
+            margin-top: var(--space-6);
+        }
+
+        .btn {
+            padding: var(--space-3) var(--space-4);
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-semibold);
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            min-height: 44px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-200);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            color: var(--gray-600);
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--gray-200);
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .success-message {
+            background: var(--success-light);
+            color: var(--success);
+            padding: var(--space-3);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-4);
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-medium);
+        }
+
+        .error-message {
+            background: var(--danger-light);
+            color: var(--danger);
+            padding: var(--space-3);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-4);
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-medium);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .pin-container {
+                padding: var(--space-4);
+            }
+            
+            .pin-cards {
+                grid-template-columns: 1fr;
+                gap: var(--space-4);
+            }
+            
+            .pin-card {
+                padding: var(--space-4);
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: var(--space-4);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="pin-container">
+        <div class="pin-header">
+            <h1 class="pin-title">NFC Card PIN Management</h1>
+            <p class="pin-subtitle">Secure your NFC card with a 4-digit PIN for payments over ₹500</p>
+        </div>
+
+        <div class="pin-cards">
+            {% for card in nfc_cards %}
+            <div class="pin-card">
+                <div class="card-header">
+                    <h3 class="card-title">Card {{ card.card_id }}</h3>
+                    <span class="card-status {{ card.status }}">
+                        {{ card.status.title() }}
+                    </span>
+                </div>
+
+                <div class="card-info">
+                    <div class="info-row">
+                        <span class="info-label">Card ID:</span>
+                        <span class="info-value">{{ card.card_id }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Email:</span>
+                        <span class="info-value">{{ card.email or 'Not set' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Roll No:</span>
+                        <span class="info-value">{{ card.roll_no or 'Not set' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Created:</span>
+                        <span class="info-value">{{ card.created_at.strftime('%Y-%m-%d') if card.created_at else 'Unknown' }}</span>
+                    </div>
+                </div>
+
+                <div class="pin-status">
+                    <div class="pin-status-icon {{ 'set' if card.pin else 'not-set' }}">
+                        {{ '✓' if card.pin else '!' }}
+                    </div>
+                    <span class="info-value">
+                        PIN {{ 'Set' if card.pin else 'Not Set' }}
+                    </span>
+                </div>
+
+                <div class="pin-actions">
+                    {% if card.pin %}
+                        <button class="pin-btn primary" onclick="openUpdatePinModal('{{ card.card_id }}')">
+                            Update PIN
+                        </button>
+                        <button class="pin-btn secondary" onclick="verifyPin('{{ card.card_id }}')">
+                            Verify PIN
+                        </button>
+                    {% else %}
+                        <button class="pin-btn primary" onclick="openSetPinModal('{{ card.card_id }}')">
+                            Set PIN
+                        </button>
+                    {% endif %}
+                    
+                    <button class="pin-btn secondary" onclick="toggleCardStatus('{{ card.card_id }}')">
+                        {{ 'Deactivate' if card.status == 'active' else 'Activate' }} Card
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Set PIN Modal -->
+    <div id="setPinModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Set PIN</h3>
+                <button class="modal-close" onclick="closeModal('setPinModal')">&times;</button>
+            </div>
+            <div id="setPinMessage"></div>
+            <form id="setPinForm">
+                <div class="form-group">
+                    <label class="form-label" for="setPinInput">Enter 4-digit PIN</label>
+                    <input type="password" id="setPinInput" class="form-input" maxlength="4" placeholder="1234">
+                    <div class="form-help">PIN must be exactly 4 digits</div>
+                    <div id="setPinError" class="form-error"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="confirmSetPinInput">Confirm PIN</label>
+                    <input type="password" id="confirmSetPinInput" class="form-input" maxlength="4" placeholder="1234">
+                    <div id="confirmSetPinError" class="form-error"></div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('setPinModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="setPinBtn">
+                        <span class="btn-text">Set PIN</span>
+                        <div class="loading" style="display: none;">
+                            <div class="spinner"></div>
+                            <span>Setting PIN...</span>
+                        </div>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Update PIN Modal -->
+    <div id="updatePinModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Update PIN</h3>
+                <button class="modal-close" onclick="closeModal('updatePinModal')">&times;</button>
+            </div>
+            <div id="updatePinMessage"></div>
+            <form id="updatePinForm">
+                <div class="form-group">
+                    <label class="form-label" for="oldPinInput">Enter Current PIN</label>
+                    <input type="password" id="oldPinInput" class="form-input" maxlength="4" placeholder="1234">
+                    <div id="oldPinError" class="form-error"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="newPinInput">Enter New PIN</label>
+                    <input type="password" id="newPinInput" class="form-input" maxlength="4" placeholder="5678">
+                    <div class="form-help">PIN must be exactly 4 digits</div>
+                    <div id="newPinError" class="form-error"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="confirmNewPinInput">Confirm New PIN</label>
+                    <input type="password" id="confirmNewPinInput" class="form-input" maxlength="4" placeholder="5678">
+                    <div id="confirmNewPinError" class="form-error"></div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('updatePinModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="updatePinBtn">
+                        <span class="btn-text">Update PIN</span>
+                        <div class="loading" style="display: none;">
+                            <div class="spinner"></div>
+                            <span>Updating PIN...</span>
+                        </div>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Verify PIN Modal -->
+    <div id="verifyPinModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Verify PIN</h3>
+                <button class="modal-close" onclick="closeModal('verifyPinModal')">&times;</button>
+            </div>
+            <div id="verifyPinMessage"></div>
+            <form id="verifyPinForm">
+                <div class="form-group">
+                    <label class="form-label" for="verifyPinInput">Enter PIN to verify</label>
+                    <input type="password" id="verifyPinInput" class="form-input" maxlength="4" placeholder="1234">
+                    <div id="verifyPinError" class="form-error"></div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('verifyPinModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="verifyPinBtn">
+                        <span class="btn-text">Verify PIN</span>
+                        <div class="loading" style="display: none;">
+                            <div class="spinner"></div>
+                            <span>Verifying...</span>
+                        </div>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentCardId = null;
+
+        // Modal functions
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+            document.body.style.overflow = 'auto';
+            clearForm(modalId);
+        }
+
+        function clearForm(modalId) {
+            const modal = document.getElementById(modalId);
+            const form = modal.querySelector('form');
+            if (form) {
+                form.reset();
+            }
+            const errorElements = modal.querySelectorAll('.form-error');
+            errorElements.forEach(el => el.textContent = '');
+            const messageElement = modal.querySelector('[id$="Message"]');
+            if (messageElement) {
+                messageElement.innerHTML = '';
+            }
+        }
+
+        // Set PIN functions
+        function openSetPinModal(cardId) {
+            currentCardId = cardId;
+            openModal('setPinModal');
+        }
+
+        function openUpdatePinModal(cardId) {
+            currentCardId = cardId;
+            openModal('updatePinModal');
+        }
+
+        function verifyPin(cardId) {
+            currentCardId = cardId;
+            openModal('verifyPinModal');
+        }
+
+        // Form validation
+        function validatePin(pin) {
+            return /^\d{4}$/.test(pin);
+        }
+
+        function showError(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            if (errorElement) {
+                errorElement.textContent = message;
+            }
+        }
+
+        function clearError(elementId) {
+            const errorElement = document.getElementById(elementId);
+            if (errorElement) {
+                errorElement.textContent = '';
+            }
+        }
+
+        function showMessage(modalId, message, type = 'success') {
+            const messageElement = document.getElementById(modalId + 'Message');
+            if (messageElement) {
+                messageElement.innerHTML = `<div class="${type}-message">${message}</div>`;
+            }
+        }
+
+        function setLoading(buttonId, loading) {
+            const button = document.getElementById(buttonId);
+            const btnText = button.querySelector('.btn-text');
+            const loadingDiv = button.querySelector('.loading');
+            
+            if (loading) {
+                btnText.style.display = 'none';
+                loadingDiv.style.display = 'flex';
+                button.disabled = true;
+            } else {
+                btnText.style.display = 'inline';
+                loadingDiv.style.display = 'none';
+                button.disabled = false;
+            }
+        }
+
+        // Set PIN form submission
+        document.getElementById('setPinForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const pin = document.getElementById('setPinInput').value;
+            const confirmPin = document.getElementById('confirmSetPinInput').value;
+            
+            // Clear previous errors
+            clearError('setPinError');
+            clearError('confirmSetPinError');
+            
+            // Validate PIN
+            if (!validatePin(pin)) {
+                showError('setPinError', 'PIN must be exactly 4 digits');
+                return;
+            }
+            
+            if (pin !== confirmPin) {
+                showError('confirmSetPinError', 'PINs do not match');
+                return;
+            }
+            
+            setLoading('setPinBtn', true);
+            
+            try {
+                const response = await fetch(`/nfc/cards/${currentCardId}/set-pin`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ pin: pin })
+                });
+                
+                const result = await response.text();
+                
+                if (response.ok) {
+                    showMessage('setPin', result, 'success');
+                    setTimeout(() => {
+                        closeModal('setPinModal');
+                        location.reload();
+                    }, 2000);
+                } else {
+                    showMessage('setPin', result, 'error');
+                }
+            } catch (error) {
+                showMessage('setPin', 'An error occurred. Please try again.', 'error');
+            } finally {
+                setLoading('setPinBtn', false);
+            }
+        });
+
+        // Update PIN form submission
+        document.getElementById('updatePinForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const oldPin = document.getElementById('oldPinInput').value;
+            const newPin = document.getElementById('newPinInput').value;
+            const confirmNewPin = document.getElementById('confirmNewPinInput').value;
+            
+            // Clear previous errors
+            clearError('oldPinError');
+            clearError('newPinError');
+            clearError('confirmNewPinError');
+            
+            // Validate PINs
+            if (!validatePin(oldPin)) {
+                showError('oldPinError', 'Old PIN must be exactly 4 digits');
+                return;
+            }
+            
+            if (!validatePin(newPin)) {
+                showError('newPinError', 'New PIN must be exactly 4 digits');
+                return;
+            }
+            
+            if (newPin !== confirmNewPin) {
+                showError('confirmNewPinError', 'New PINs do not match');
+                return;
+            }
+            
+            if (oldPin === newPin) {
+                showError('newPinError', 'New PIN must be different from old PIN');
+                return;
+            }
+            
+            setLoading('updatePinBtn', true);
+            
+            try {
+                const response = await fetch(`/nfc/cards/${currentCardId}/update-pin`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        old_pin: oldPin, 
+                        new_pin: newPin 
+                    })
+                });
+                
+                const result = await response.text();
+                
+                if (response.ok) {
+                    showMessage('updatePin', result, 'success');
+                    setTimeout(() => {
+                        closeModal('updatePinModal');
+                        location.reload();
+                    }, 2000);
+                } else {
+                    showMessage('updatePin', result, 'error');
+                }
+            } catch (error) {
+                showMessage('updatePin', 'An error occurred. Please try again.', 'error');
+            } finally {
+                setLoading('updatePinBtn', false);
+            }
+        });
+
+        // Verify PIN form submission
+        document.getElementById('verifyPinForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const pin = document.getElementById('verifyPinInput').value;
+            
+            // Clear previous errors
+            clearError('verifyPinError');
+            
+            // Validate PIN
+            if (!validatePin(pin)) {
+                showError('verifyPinError', 'PIN must be exactly 4 digits');
+                return;
+            }
+            
+            setLoading('verifyPinBtn', true);
+            
+            try {
+                const response = await fetch(`/nfc/cards/${currentCardId}/verify-pin`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ pin: pin })
+                });
+                
+                const result = await response.text();
+                
+                if (response.ok) {
+                    showMessage('verifyPin', 'PIN verified successfully!', 'success');
+                    setTimeout(() => {
+                        closeModal('verifyPinModal');
+                    }, 2000);
+                } else {
+                    showMessage('verifyPin', result, 'error');
+                }
+            } catch (error) {
+                showMessage('verifyPin', 'An error occurred. Please try again.', 'error');
+            } finally {
+                setLoading('verifyPinBtn', false);
+            }
+        });
+
+        // Toggle card status
+        async function toggleCardStatus(cardId) {
+            if (confirm('Are you sure you want to toggle this card status?')) {
+                try {
+                    const response = await fetch(`/nfc/cards/${cardId}/toggle`, {
+                        method: 'POST'
+                    });
+                    
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('Failed to toggle card status');
+                    }
+                } catch (error) {
+                    alert('An error occurred. Please try again.');
+                }
+            }
+        }
+
+
+        // Close modals when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                closeModal(e.target.id);
+            }
+        });
+
+        // Only allow numeric input for PIN fields
+        document.querySelectorAll('input[type="password"]').forEach(input => {
+            input.addEventListener('input', function(e) {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Attendance - {{ filename }} - ByteCredits</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background: var(--light-gray);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: var(--white);
+            padding: var(--space-6) var(--space-8);
+            box-shadow: var(--shadow-sm);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .title {
+            font-size: var(--font-size-3xl);
+            color: var(--gray-900);
+            margin-bottom: var(--space-2);
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: var(--gray-600);
+            text-align: center;
+            font-size: var(--font-size-lg);
+            font-weight: 400;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--space-8);
+        }
+
+        .back-link {
+            display: inline-block;
+            color: var(--gray-600);
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: var(--space-6);
+            padding: var(--space-2) var(--space-4);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            transition: all var(--transition-fast);
+        }
+
+        .back-link:hover {
+            background: var(--gray-50);
+            color: var(--gray-900);
+        }
+
+        .file-info {
+            background: var(--white);
+            padding: var(--space-4);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: var(--space-6);
+            border-left: 4px solid var(--primary);
+        }
+
+        .file-info h3 {
+            margin: 0 0 var(--space-2) 0;
+            color: var(--gray-900);
+        }
+
+        .file-info p {
+            margin: 0;
+            color: var(--gray-600);
+        }
+
+        .attendance-table {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            margin-bottom: var(--space-6);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: var(--space-3);
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .table th {
+            background: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: var(--font-size-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .table tr:hover {
+            background: var(--gray-50);
+        }
+
+        .attendance-select {
+            padding: var(--space-2);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-sm);
+            font-size: var(--font-size-sm);
+            background: var(--white);
+            cursor: pointer;
+        }
+
+        .attendance-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+
+        .present {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .absent {
+            color: var(--error);
+            font-weight: 600;
+        }
+
+        .late {
+            color: var(--warning);
+            font-weight: 600;
+        }
+
+        .actions {
+            display: flex;
+            gap: var(--space-3);
+            justify-content: center;
+            margin-top: var(--space-6);
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: var(--space-3) var(--space-6);
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            transition: all var(--transition-fast);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-200);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: var(--white);
+        }
+
+        .btn-success:hover {
+            background: var(--success-dark);
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: var(--white);
+        }
+
+        .btn-warning:hover {
+            background: var(--warning-dark);
+        }
+
+        .date-section {
+            margin-bottom: var(--space-8);
+        }
+
+        .date-section h4 {
+            margin: 0 0 var(--space-4) 0;
+            color: var(--gray-900);
+            font-size: var(--font-size-lg);
+            padding: var(--space-3);
+            background: var(--gray-50);
+            border-radius: var(--radius-md);
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+
+        .stat-card {
+            background: var(--white);
+            padding: var(--space-4);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: var(--font-size-2xl);
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .stat-label {
+            color: var(--gray-600);
+            font-size: var(--font-size-sm);
+            margin-top: var(--space-1);
+        }
+
+        .loading {
+            text-align: center;
+            padding: var(--space-8);
+            color: var(--gray-600);
+        }
+
+        .no-data {
+            text-align: center;
+            padding: var(--space-8);
+            color: var(--gray-500);
+        }
+
+        @media (max-width: 768px) {
+            .table {
+                font-size: var(--font-size-sm);
+            }
+            
+            .table th,
+            .table td {
+                padding: var(--space-2);
+            }
+            
+            .actions {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="title">✏️ Edit Attendance</h1>
+        <p class="subtitle">Modify attendance records for {{ filename }}</p>
+    </div>
+
+    <div class="container">
+        <a href="/attendance_class_files" class="back-link">← Back to Class Files</a>
+
+        <div class="file-info">
+            <h3>File Information</h3>
+            <p><strong>File:</strong> {{ filename }}</p>
+            <p><strong>Total Records:</strong> {{ total_records }}</p>
+            <p><strong>Last Modified:</strong> {{ last_modified }}</p>
+        </div>
+
+        {% if summary_stats %}
+        <div class="summary-stats">
+            <div class="stat-card">
+                <div class="stat-number">{{ summary_stats.total_students }}</div>
+                <div class="stat-label">Total Students</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ summary_stats.present_count }}</div>
+                <div class="stat-label">Present</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ summary_stats.absent_count }}</div>
+                <div class="stat-label">Absent</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ summary_stats.attendance_rate }}%</div>
+                <div class="stat-label">Attendance Rate</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <form id="attendanceForm" method="POST" action="/save_attendance_edits">
+            <input type="hidden" name="filename" value="{{ filename }}">
+            
+            {% if attendance_data %}
+                {% for date, records in attendance_data.items() %}
+                <div class="date-section">
+                    <h4>📅 {{ date }}</h4>
+                    <div class="attendance-table">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Roll No</th>
+                                    <th>Email</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in records %}
+                                <tr data-record-id="{{ date }}_{{ loop.index }}">
+                                    <td>{{ record.name or 'N/A' }}</td>
+                                    <td>{{ record.roll_no or 'N/A' }}</td>
+                                    <td>{{ record.email or 'N/A' }}</td>
+                                    <td>{{ record.time or 'N/A' }}</td>
+                                    <td>
+                                        <select name="status_{{ date }}_{{ loop.index }}" class="attendance-select">
+                                            <option value="Present" {% if record.status == 'Present' %}selected{% endif %}>Present</option>
+                                            <option value="Absent" {% if record.status == 'Absent' %}selected{% endif %}>Absent</option>
+                                            <option value="Late" {% if record.status == 'Late' %}selected{% endif %}>Late</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-warning" onclick="removeRecord('{{ date }}_{{ loop.index }}')">
+                                            🗑️ Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-data">
+                    <h3>No attendance data found</h3>
+                    <p>The Excel file appears to be empty or has an unexpected format.</p>
+                    <p>Please check the file and try again.</p>
+                </div>
+            {% endif %}
+
+            <div class="actions">
+                <button type="submit" class="btn btn-success">
+                    💾 Save Changes
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                    🔄 Reset
+                </button>
+                <a href="/view_attendance_data/{{ filename }}" class="btn btn-primary">
+                    👁️ View Only
+                </a>
+                <a href="/download_attendance_file/{{ filename }}" class="btn btn-secondary">
+                    📥 Download
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Form submission with confirmation
+        document.getElementById('attendanceForm').addEventListener('submit', function(e) {
+            if (!confirm('Are you sure you want to save these changes?')) {
+                e.preventDefault();
+            }
+        });
+
+        // Reset form function
+        function resetForm() {
+            if (confirm('Are you sure you want to reset all changes?')) {
+                location.reload();
+            }
+        }
+
+        // Remove record function
+        function removeRecord(recordId) {
+            if (confirm('Are you sure you want to remove this record?')) {
+                // Hide the row
+                const row = document.querySelector(`[data-record-id="${recordId}"]`);
+                if (row) {
+                    row.style.display = 'none';
+                    // Add hidden input to mark for removal
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'remove_' + recordId;
+                    hiddenInput.value = 'true';
+                    document.getElementById('attendanceForm').appendChild(hiddenInput);
+                }
+            }
+        }
+
+        // Auto-save functionality (optional)
+        let autoSaveTimeout;
+        document.querySelectorAll('.attendance-select').forEach(select => {
+            select.addEventListener('change', function() {
+                clearTimeout(autoSaveTimeout);
+                autoSaveTimeout = setTimeout(() => {
+                    // Optional: Auto-save changes
+                    console.log('Auto-save triggered');
+                }, 2000);
+            });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                document.getElementById('attendanceForm').submit();
+            }
+        });
+    </script>
+</body>
+</html>

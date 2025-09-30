@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam History - ByteCredits</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .history-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--space-6);
+        }
+        
+        .history-header {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-lg);
+            margin-bottom: var(--space-6);
+            text-align: center;
+        }
+        
+        .history-header h1 {
+            color: var(--primary-600);
+            margin-bottom: var(--space-2);
+        }
+        
+        .history-header p {
+            color: var(--gray-600);
+            margin: 0;
+        }
+        
+        .exam-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-md);
+            margin-bottom: var(--space-4);
+            border: 1px solid var(--gray-200);
+            transition: var(--transition);
+        }
+        
+        .exam-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .exam-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--space-4);
+        }
+        
+        .exam-info h3 {
+            color: var(--gray-800);
+            margin-bottom: var(--space-2);
+            font-size: var(--text-xl);
+        }
+        
+        .exam-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
+        }
+        
+        .exam-detail {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            color: var(--gray-600);
+        }
+        
+        .exam-detail span:first-child {
+            font-weight: var(--font-semibold);
+            color: var(--gray-700);
+        }
+        
+        .result-section {
+            background: var(--gray-50);
+            border-radius: var(--radius-md);
+            padding: var(--space-4);
+            margin-bottom: var(--space-4);
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-3);
+        }
+        
+        .result-title {
+            font-size: var(--text-lg);
+            font-weight: var(--font-semibold);
+            color: var(--gray-800);
+        }
+        
+        .grade-badge {
+            padding: var(--space-2) var(--space-4);
+            border-radius: var(--radius-full);
+            font-weight: var(--font-bold);
+            font-size: var(--text-lg);
+        }
+        
+        .grade-a-plus { background: var(--green-100); color: var(--green-700); }
+        .grade-a { background: var(--green-100); color: var(--green-700); }
+        .grade-b-plus { background: var(--blue-100); color: var(--blue-700); }
+        .grade-b { background: var(--blue-100); color: var(--blue-700); }
+        .grade-c-plus { background: var(--yellow-100); color: var(--yellow-700); }
+        .grade-c { background: var(--yellow-100); color: var(--yellow-700); }
+        .grade-d { background: var(--orange-100); color: var(--orange-700); }
+        .grade-f { background: var(--red-100); color: var(--red-700); }
+        
+        .result-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--space-3);
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: var(--space-3);
+            background: var(--white);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--gray-200);
+        }
+        
+        .stat-value {
+            font-size: var(--text-2xl);
+            font-weight: var(--font-bold);
+            color: var(--primary-600);
+            margin-bottom: var(--space-1);
+        }
+        
+        .stat-label {
+            font-size: var(--text-sm);
+            color: var(--gray-600);
+        }
+        
+        .exam-actions {
+            display: flex;
+            gap: var(--space-3);
+            justify-content: flex-end;
+        }
+        
+        .btn-view-result {
+            background: var(--primary-500);
+            color: var(--white);
+            padding: var(--space-2) var(--space-4);
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: var(--text-sm);
+            font-weight: var(--font-semibold);
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-view-result:hover {
+            background: var(--primary-600);
+            transform: translateY(-1px);
+        }
+        
+        .no-exams {
+            text-align: center;
+            padding: var(--space-8);
+            color: var(--gray-500);
+        }
+        
+        .no-exams h3 {
+            margin-bottom: var(--space-2);
+            color: var(--gray-600);
+        }
+        
+        .back-btn {
+            background: var(--gray-500);
+            color: var(--white);
+            padding: var(--space-3) var(--space-6);
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: var(--text-base);
+            font-weight: var(--font-semibold);
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: var(--space-6);
+        }
+        
+        .back-btn:hover {
+            background: var(--gray-600);
+            transform: translateY(-1px);
+        }
+        
+        @media (max-width: 768px) {
+            .exam-header {
+                flex-direction: column;
+                gap: var(--space-3);
+            }
+            
+            .exam-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .result-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .exam-actions {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="history-container">
+        <a href="{{ url_for('student') }}" class="back-btn">← Back to Dashboard</a>
+        
+        <div class="history-header">
+            <h1>📊 Exam History</h1>
+            <p>View all your completed exams and results</p>
+        </div>
+        
+        {% if exams_with_results %}
+            {% for exam, result in exams_with_results %}
+            <div class="exam-card">
+                <div class="exam-header">
+                    <div class="exam-info">
+                        <h3>{{ exam.subject_name }}</h3>
+                        <div class="exam-details">
+                            <div class="exam-detail">
+                                <span>📝</span>
+                                <span>{{ exam.total_questions }} Questions</span>
+                            </div>
+                            <div class="exam-detail">
+                                <span>🏆</span>
+                                <span>{{ exam.total_marks }} Marks</span>
+                            </div>
+                            <div class="exam-detail">
+                                <span>⏱️</span>
+                                <span>{{ exam.time_limit }} Minutes</span>
+                            </div>
+                            <div class="exam-detail">
+                                <span>📅</span>
+                                <span>{{ exam.created_at.strftime('%d %b %Y') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="result-section">
+                    <div class="result-header">
+                        <div class="result-title">Exam Results</div>
+                        <div class="grade-badge grade-{{ result.grade.lower().replace('+', '-plus') }}">
+                            {{ result.grade }}
+                        </div>
+                    </div>
+                    
+                    <div class="result-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">{{ result.obtained_marks }}/{{ result.total_marks }}</div>
+                            <div class="stat-label">Marks Obtained</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">{{ "%.1f"|format(result.percentage) }}%</div>
+                            <div class="stat-label">Percentage</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">{{ result.grade }}</div>
+                            <div class="stat-label">Grade</div>
+                        </div>
+                        {% if result.evaluated_at %}
+                        <div class="stat-item">
+                            <div class="stat-value">{{ result.evaluated_at.strftime('%d %b') }}</div>
+                            <div class="stat-label">Evaluated On</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="exam-actions">
+                    <a href="/exam_result/{{ exam.exam_id }}" class="btn-view-result">
+                        📋 View Detailed Results
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-exams">
+                <h3>📝 No Completed Exams</h3>
+                <p>You haven't completed any exams yet. Start by creating a mock exam!</p>
+                <a href="/create_custom_exam" class="btn-view-result" style="margin-top: var(--space-4);">
+                    🎯 Create New Exam
+                </a>
+            </div>
+        {% endif %}
+    </div>
+    
+    <script>
+        // Add any interactive features here if needed
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add smooth scrolling for better UX
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>

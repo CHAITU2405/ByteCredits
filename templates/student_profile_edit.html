@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Student Profile - ByteCredits</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .container { max-width: 960px; margin: 24px auto; background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-2xl); box-shadow: var(--shadow-lg); overflow: hidden; }
+    .header { padding: 16px 20px; background: var(--primary-gradient); color: var(--white); display: flex; justify-content: space-between; align-items: center; }
+    .section { padding: 16px 20px; border-top: 1px solid var(--gray-200); }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid-1 { grid-template-columns: 1fr; }
+    .label { font-weight: 600; margin-bottom: 6px; }
+    .input, textarea { width: 100%; padding: 10px 12px; border: 2px solid var(--gray-200); border-radius: var(--radius-xl); }
+    .input:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+    .btn { padding: 10px 14px; border-radius: var(--radius-xl); border: none; cursor: pointer; background: var(--primary); color: white; font-weight: 600; }
+    .switch { display:flex; gap:8px; align-items:center; }
+    .muted { color: var(--gray-600); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2 style="margin:0;">Your Student Profile</h2>
+      <div>
+        <a href="{{ url_for('student') }}" class="btn" style="background: var(--gray-700); text-decoration:none;">Back</a>
+      </div>
+    </div>
+
+    <div class="section grid grid-1">
+      <div class="label">Full Name</div>
+      <input id="fullName" class="input" type="text" placeholder="Your full name" value="{{ resume.get('full_name','') }}">
+
+      <div class="label">Headline</div>
+      <input id="headline" class="input" type="text" placeholder="e.g., Final-year CSE student | Web Developer" value="{{ resume.get('headline','') }}">
+
+      <div class="label">About</div>
+      <textarea id="about" rows="4" placeholder="Brief summary about you">{{ resume.get('about','') }}</textarea>
+    </div>
+
+    <div class="section grid">
+      <div>
+        <div class="label">Email</div>
+        <input id="email" class="input" type="email" placeholder="name@example.com" value="{{ resume.get('email','') }}">
+      </div>
+      <div>
+        <div class="label">Phone</div>
+        <input id="phone" class="input" type="text" placeholder="Phone number" value="{{ resume.get('phone','') }}">
+      </div>
+      <div>
+        <div class="label">LinkedIn</div>
+        <input id="linkedin" class="input" type="url" placeholder="https://linkedin.com/in/username" value="{{ resume.get('linkedin','') }}">
+      </div>
+      <div>
+        <div class="label">GitHub</div>
+        <input id="github" class="input" type="url" placeholder="https://github.com/username" value="{{ resume.get('github','') }}">
+      </div>
+    </div>
+
+    <div class="section grid grid-1">
+      <div class="label">Education (JSON array)</div>
+      <textarea id="education" rows="5" placeholder='[ {"degree":"B.Tech CSE","institute":"ABC College","year":"2022-2026","cgpa":"8.5"} ]'>{{ resume.get('education','') }}</textarea>
+
+      <div class="label">Experience (JSON array)</div>
+      <textarea id="experience" rows="5" placeholder='[ {"role":"Intern","company":"XYZ Ltd","duration":"May 2025 - Jul 2025","summary":"Worked on..."} ]'>{{ resume.get('experience','') }}</textarea>
+
+      <div class="label">Projects (JSON array)</div>
+      <textarea id="projects" rows="5" placeholder='[ {"name":"Project A","link":"https://...","tech":"Python, Flask","summary":"..."} ]'>{{ resume.get('projects','') }}</textarea>
+
+      <div class="label">Certificates (JSON array)</div>
+      <textarea id="certificates" rows="5" placeholder='[ {"title":"Python Basics","issuer":"Coursera","year":"2024","link":"https://..."} ]'>{{ resume.get('certificates','') }}</textarea>
+
+      <div class="label">Achievements (JSON array)</div>
+      <textarea id="achievements" rows="5" placeholder='[ {"title":"Hackathon Winner","issuer":"Smart India Hackathon","year":"2024","summary":"Won 1st prize among 100+ teams"} ]'>{{ resume.get('achievements','') }}</textarea>
+
+      <div class="label">Skills (comma separated)</div>
+      <input id="skills" class="input" type="text" placeholder="Python, SQL, HTML, CSS, JS" value="{{ resume.get('skills','') }}">
+    </div>
+
+    <div class="section" style="display:flex; justify-content:space-between; align-items:center;">
+      <div class="switch">
+        <input id="publicSwitch" type="checkbox" {% if profile.is_resume_public %}checked{% endif %}>
+        <label for="publicSwitch">Make profile public</label>
+      </div>
+      {% if profile.is_resume_public and profile.public_slug %}
+        <div>
+          <div class="muted">Public Link</div>
+          <a id="publicUrl" href="{{ url_for('student_profile_view', slug=profile.public_slug, _external=True) }}" target="_blank">{{ url_for('student_profile_view', slug=profile.public_slug, _external=True) }}</a>
+        </div>
+      {% endif %}
+      <div style="display:flex; gap:8px;">
+        <button class="btn" onclick="saveProfile()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function parseOrRaw(id) {
+      const v = document.getElementById(id).value.trim();
+      if (!v) return '';
+      try { return JSON.stringify(JSON.parse(v)); } catch { return v; }
+    }
+
+    async function saveProfile() {
+      const payload = {
+        resume: {
+          full_name: document.getElementById('fullName').value,
+          headline: document.getElementById('headline').value,
+          about: document.getElementById('about').value,
+          email: document.getElementById('email').value,
+          phone: document.getElementById('phone').value,
+          linkedin: document.getElementById('linkedin').value,
+          github: document.getElementById('github').value,
+          education: document.getElementById('education').value,
+          experience: document.getElementById('experience').value,
+          projects: document.getElementById('projects').value,
+          certificates: document.getElementById('certificates').value,
+          achievements: document.getElementById('achievements').value,
+          skills: document.getElementById('skills').value
+        },
+        is_public: document.getElementById('publicSwitch').checked
+      };
+
+      const res = await fetch('/student/profile', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (!data.success) { alert('Save failed: ' + (data.message || '')); return; }
+      if (data.public_url) {
+        alert('Profile saved. Public URL: ' + data.public_url);
+        const link = document.getElementById('publicUrl');
+        if (link) link.href = data.public_url;
+      } else {
+        alert('Profile saved.');
+      }
+      location.reload();
+    }
+
+  </script>
+</body>
+</html>
+
+

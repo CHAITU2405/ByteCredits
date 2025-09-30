@@ -1,0 +1,466 @@
+/* Mobile-First Responsive Design for ByteCredits Admin Dashboard */
+/* Following 12 UI/UX Principles for Optimal Mobile Experience */
+
+/* 1. VISUAL HIERARCHY - Clear mobile information architecture */
+@media (max-width: 768px) {
+    .admin-container {
+        padding: 0;
+        margin: 0;
+        overflow-x: hidden;
+        min-height: 100vh;
+    }
+    
+    .admin-welcome {
+        padding: var(--space-4);
+        margin-bottom: var(--space-4);
+        border-radius: var(--radius-lg);
+        text-align: center;
+    }
+    
+    .welcome-title {
+        font-size: var(--font-size-xl);
+        margin-bottom: var(--space-1);
+        line-height: 1.2;
+    }
+    
+    .welcome-subtitle {
+        font-size: var(--font-size-sm);
+        opacity: 0.9;
+    }
+}
+
+/* 2. CONSISTENCY - Unified mobile design language */
+@media (max-width: 768px) {
+    .admin-stats {
+        grid-template-columns: 1fr;
+        gap: var(--space-3);
+        margin-bottom: var(--space-4);
+    }
+    
+    .stat-card {
+        padding: var(--space-4);
+        border-radius: var(--radius-lg);
+        text-align: center;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--gray-200);
+    }
+    
+    .stat-number {
+        font-size: var(--font-size-2xl);
+        margin-bottom: var(--space-1);
+        font-weight: var(--font-bold);
+    }
+    
+    .stat-label {
+        font-size: var(--font-size-sm);
+        color: var(--gray-600);
+    }
+}
+
+/* 3. SIMPLICITY - Clean mobile interface */
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: var(--space-3);
+        max-width: 100%;
+    }
+    
+    .dashboard-header {
+        padding: var(--space-4);
+        margin-bottom: var(--space-4);
+    }
+    
+    .dashboard-title {
+        font-size: var(--font-size-xl);
+        text-align: center;
+    }
+}
+
+/* 4. NAVIGATION - Mobile-optimized navigation */
+@media (max-width: 768px) {
+    .admin-nav {
+        display: flex;
+        justify-content: space-around;
+        background: white;
+        padding: var(--space-3);
+        border-bottom: 1px solid var(--gray-200);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: var(--space-2);
+        border-radius: var(--radius-lg);
+        text-decoration: none;
+        color: var(--gray-600);
+        font-size: var(--font-size-xs);
+        font-weight: var(--font-medium);
+        transition: all var(--transition-normal);
+        min-width: 60px;
+        touch-action: manipulation;
+    }
+    
+    .nav-item.active {
+        background: var(--primary-light);
+        color: var(--primary);
+    }
+    
+    .nav-item:hover {
+        background: var(--gray-100);
+        transform: translateY(-2px);
+    }
+    
+    .nav-icon {
+        font-size: var(--font-size-lg);
+        margin-bottom: var(--space-1);
+    }
+}
+
+/* 5. RESPONSIVE DESIGN - Mobile-first approach */
+@media (max-width: 480px) {
+    .admin-stats {
+        grid-template-columns: 1fr;
+        gap: var(--space-2);
+    }
+    
+    .stat-card {
+        padding: var(--space-3);
+    }
+    
+    .stat-number {
+        font-size: var(--font-size-xl);
+    }
+    
+    .welcome-title {
+        font-size: var(--font-size-lg);
+    }
+}
+
+/* 6. ACCESSIBILITY - Touch-friendly interface */
+@media (max-width: 768px) {
+    .btn, .action-button {
+        min-height: 44px;
+        min-width: 44px;
+        padding: var(--space-3) var(--space-4);
+        font-size: var(--font-size-sm);
+        border-radius: var(--radius-lg);
+        touch-action: manipulation;
+    }
+    
+    .table-row {
+        padding: var(--space-3);
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        touch-action: manipulation;
+    }
+    
+    .table-row:hover {
+        background: var(--gray-50);
+    }
+    
+    /* Ensure all interactive elements are touch-friendly */
+    button, a, input, select, textarea {
+        min-height: 44px;
+        touch-action: manipulation;
+    }
+}
+
+/* 7. PERFORMANCE - Optimized for mobile */
+@media (max-width: 768px) {
+    .chart-container {
+        height: 250px;
+        padding: var(--space-3);
+        margin-bottom: var(--space-3);
+        background: white;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .chart-title {
+        font-size: var(--font-size-lg);
+        margin-bottom: var(--space-3);
+        text-align: center;
+    }
+    
+    /* Optimize images and media */
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    /* Reduce animations for better performance */
+    * {
+        will-change: auto;
+    }
+}
+
+/* 8. FEEDBACK - Mobile user feedback */
+@media (max-width: 768px) {
+    .loading {
+        padding: var(--space-6);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .spinner {
+        width: 24px;
+        height: 24px;
+        border: 3px solid var(--gray-200);
+        border-top: 3px solid var(--primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Touch feedback */
+    .touchable:active {
+        transform: scale(0.98);
+        transition: transform 0.1s ease;
+    }
+}
+
+/* 9. ERROR HANDLING - Mobile error states */
+@media (max-width: 768px) {
+    .error-message {
+        padding: var(--space-3);
+        margin: var(--space-3) 0;
+        font-size: var(--font-size-sm);
+        text-align: center;
+        background: var(--danger-light);
+        color: var(--danger);
+        border-radius: var(--radius-lg);
+    }
+    
+    .success-message {
+        padding: var(--space-3);
+        margin: var(--space-3) 0;
+        font-size: var(--font-size-sm);
+        text-align: center;
+        background: var(--success-light);
+        color: var(--success);
+        border-radius: var(--radius-lg);
+    }
+}
+
+/* 10. LOADING STATES - Mobile transitions */
+@media (max-width: 768px) {
+    .fade-in {
+        animation: fadeInMobile 0.3s ease-in;
+    }
+    
+    @keyframes fadeInMobile {
+        from { 
+            opacity: 0; 
+            transform: translateY(10px); 
+        }
+        to { 
+            opacity: 1; 
+            transform: translateY(0); 
+        }
+    }
+    
+    /* Smooth transitions for mobile */
+    .smooth-transition {
+        transition: all 0.3s ease;
+    }
+}
+
+/* 11. DATA VISUALIZATION - Mobile-optimized tables */
+@media (max-width: 768px) {
+    .data-table {
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        margin-bottom: var(--space-3);
+        background: white;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .table-header {
+        padding: var(--space-3);
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-semibold);
+        background: var(--gray-50);
+        color: var(--gray-700);
+    }
+    
+    .table-content {
+        max-height: 300px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+    }
+    
+    .table-row {
+        padding: var(--space-3);
+        border-bottom: 1px solid var(--gray-100);
+        font-size: var(--font-size-sm);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .table-row:last-child {
+        border-bottom: none;
+    }
+    
+    .table-row:hover {
+        background: var(--gray-50);
+    }
+}
+
+/* 12. MOBILE OPTIMIZATIONS - Touch and scroll improvements */
+@media (max-width: 768px) {
+    .scroll-container {
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+    }
+    
+    .touch-action {
+        touch-action: manipulation;
+    }
+    
+    /* Prevent horizontal scroll */
+    body {
+        overflow-x: hidden;
+    }
+    
+    /* Smooth scrolling for sections */
+    .content-section {
+        scroll-margin-top: 80px;
+    }
+    
+    /* Optimize scrolling performance */
+    .scrollable {
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+    }
+}
+
+/* Dark mode support for mobile */
+@media (max-width: 768px) and (prefers-color-scheme: dark) {
+    .admin-container {
+        background: var(--dark);
+    }
+    
+    .stat-card, .chart-container, .data-table {
+        background: var(--gray-800);
+        color: white;
+        border-color: var(--gray-700);
+    }
+    
+    .table-header {
+        background: var(--gray-700);
+        color: var(--gray-200);
+    }
+    
+    .nav-item {
+        color: var(--gray-300);
+    }
+    
+    .nav-item.active {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .admin-nav {
+        background: var(--gray-800);
+        border-color: var(--gray-700);
+    }
+}
+
+/* High contrast mode for mobile */
+@media (max-width: 768px) and (prefers-contrast: high) {
+    .stat-card, .chart-container, .data-table {
+        border: 2px solid var(--gray-900);
+    }
+    
+    .nav-item {
+        border: 1px solid var(--gray-300);
+    }
+    
+    .table-row {
+        border-bottom: 2px solid var(--gray-300);
+    }
+}
+
+/* Reduced motion for mobile */
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .fade-in {
+        animation: none;
+    }
+}
+
+/* Landscape orientation optimizations */
+@media (max-width: 768px) and (orientation: landscape) {
+    .admin-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .chart-container {
+        height: 200px;
+    }
+    
+    .admin-welcome {
+        padding: var(--space-3);
+    }
+    
+    .welcome-title {
+        font-size: var(--font-size-lg);
+    }
+}
+
+/* Extra small devices (phones in portrait) */
+@media (max-width: 320px) {
+    .admin-stats {
+        gap: var(--space-2);
+    }
+    
+    .stat-card {
+        padding: var(--space-2);
+    }
+    
+    .stat-number {
+        font-size: var(--font-size-lg);
+    }
+    
+    .nav-item {
+        padding: var(--space-1);
+        min-width: 50px;
+    }
+    
+    .nav-icon {
+        font-size: var(--font-size-base);
+    }
+}
+
+/* Print styles for mobile */
+@media print {
+    .admin-nav {
+        display: none;
+    }
+    
+    .chart-container {
+        height: auto;
+        page-break-inside: avoid;
+    }
+    
+    .stat-card {
+        page-break-inside: avoid;
+    }
+}

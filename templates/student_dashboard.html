@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Dashboard - ByteCredits</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='ICON.png') }}">
+  <style>
+    html, body { overscroll-behavior-y: contain; }
+    .section { -webkit-overflow-scrolling: touch; }
+    /* Student Dashboard Specific Styles */
+    .student-welcome {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: var(--space-8) var(--space-6);
+      border-radius: var(--radius-2xl);
+      margin-bottom: var(--space-8);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .student-welcome::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(180deg); }
+    }
+
+    .welcome-title {
+      font-size: var(--font-size-4xl);
+      font-weight: var(--font-bold);
+      margin-bottom: var(--space-2);
+      position: relative;
+      z-index: 1;
+    }
+
+    .welcome-subtitle {
+      font-size: var(--font-size-lg);
+      opacity: 0.9;
+      position: relative;
+      z-index: 1;
+    }
+
+    .balance-card {
+      background: var(--white);
+      border-radius: var(--radius-2xl);
+      padding: var(--space-6);
+      box-shadow: var(--shadow-lg);
+      text-align: center;
+      margin-bottom: var(--space-8);
+      border: 2px solid var(--success-light);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .balance-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--success-gradient);
+    }
+
+    .balance-amount {
+      font-size: var(--font-size-5xl);
+      font-weight: var(--font-bold);
+      color: var(--success);
+      margin-bottom: var(--space-2);
+      line-height: var(--leading-none);
+    }
+
+    .balance-label {
+      color: var(--gray-600);
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-medium);
+    }
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--space-4);
+      margin-bottom: var(--space-8);
+    }
+
+    .quick-action-btn {
+      background: var(--white);
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-xl);
+      padding: var(--space-4);
+      text-align: center;
+      text-decoration: none;
+      color: var(--gray-700);
+      transition: all var(--transition-normal);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-2);
+      min-height: 120px;
+      justify-content: center;
+    }
+
+    .quick-action-btn:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .quick-action-icon {
+      font-size: 2rem;
+    }
+
+    .quick-action-text {
+      font-weight: var(--font-semibold);
+      font-size: var(--font-size-sm);
+    }
+
+    .section {
+      display: none;
+      background: var(--white);
+      padding: var(--space-8);
+      border-radius: var(--radius-2xl);
+      box-shadow: var(--shadow-lg);
+      margin-bottom: var(--space-8);
+      border: 1px solid var(--gray-200);
+    }
+
+    .section.active {
+      display: block;
+      animation: slideInUp 0.4s ease-out;
+    }
+
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .section-title {
+      font-size: var(--font-size-3xl);
+      color: var(--gray-900);
+      margin-bottom: var(--space-6);
+      font-weight: var(--font-bold);
+      text-align: center;
+      position: relative;
+    }
+
+    .section-title::after {
+      content: '';
+      position: absolute;
+      bottom: -var(--space-2);
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 4px;
+      background: var(--primary-gradient);
+      border-radius: var(--radius-full);
+    }
+
+    .form-group {
+      margin-bottom: var(--space-6);
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: var(--space-2);
+      font-weight: var(--font-semibold);
+      color: var(--gray-700);
+      font-size: var(--font-size-base);
+    }
+
+    .form-input,
+    .form-textarea {
+      width: 100%;
+      padding: var(--space-4) var(--space-5);
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-xl);
+      font-size: var(--font-size-base);
+      transition: all var(--transition-fast);
+      background: var(--white);
+      font-family: inherit;
+      min-height: 48px;
+    }
+
+    .form-input:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+      transform: translateY(-1px);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    .btn {
+      padding: var(--space-4) var(--space-8);
+      background: var(--primary);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-xl);
+      cursor: pointer;
+      font-size: var(--font-size-base);
+      font-weight: var(--font-semibold);
+      transition: all var(--transition-normal);
+      position: relative;
+      overflow: hidden;
+      min-height: 48px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left var(--transition-slow);
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px 0 rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-success {
+      background: var(--success);
+    }
+
+    .btn-success:hover {
+      box-shadow: 0 8px 25px 0 rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+    }
+
+    .btn-danger:hover {
+      box-shadow: 0 8px 25px 0 rgba(239, 68, 68, 0.4);
+    }
+
+    .section {
+      display: none;
+      background: var(--white);
+      padding: var(--space-8);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-md);
+      max-width: 800px;
+      margin: auto;
+      border: 1px solid var(--gray-200);
+    }
+
+    .section.active {
+      display: block;
+      animation: fadeInUp 0.4s ease-out;
+    }
+
+    .section-title {
+      font-size: var(--font-size-2xl);
+      color: var(--gray-900);
+      margin-bottom: var(--space-6);
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .form-group {
+      margin-bottom: var(--space-4);
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: var(--space-2);
+      font-weight: 500;
+      color: var(--gray-700);
+      font-size: var(--font-size-sm);
+    }
+
+    .form-input,
+    .form-textarea {
+      width: 100%;
+      padding: var(--space-3) var(--space-4);
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      font-size: var(--font-size-base);
+      transition: all var(--transition-fast);
+      background: var(--white);
+      font-family: inherit;
+    }
+
+    .form-input:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .btn {
+      padding: var(--space-3) var(--space-6);
+      background: var(--primary-gradient);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      font-size: var(--font-size-base);
+      font-weight: 600;
+      transition: all var(--transition-normal);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left var(--transition-slow);
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+      margin-top: var(--space-6);
+    }
+
+    .table th,
+    .table td {
+      padding: var(--space-4);
+      text-align: left;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .table th {
+      background: var(--gray-50);
+      font-weight: 600;
+      color: var(--gray-700);
+      font-size: var(--font-size-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .table tr:hover {
+      background: var(--gray-50);
+    }
+
+    .filter-btn {
+      padding: var(--space-2) var(--space-4);
+      border: 2px solid var(--gray-200);
+      background: var(--white);
+      color: var(--gray-700);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      transition: all var(--transition-fast);
+    }
+
+    .filter-btn:hover {
+      border-color: #667eea;
+      color: #667eea;
+    }
+
+    .filter-btn.active {
+      background: #667eea;
+      color: var(--white);
+      border-color: #667eea;
+    }
+
+    .badge {
+      padding: var(--space-1) var(--space-3);
+      border-radius: var(--radius-full);
+      font-size: var(--font-size-xs);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-success {
+      background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+      color: #155724;
+    }
+
+    .badge-danger {
+      background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+      color: #721c24;
+    }
+
+    .transaction-row.hidden {
+      display: none;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+      position: relative;
+      margin: 5% auto;
+      padding: 0;
+      width: 90%;
+      max-width: 800px;
+      max-height: 90vh;
+      background: var(--white);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-2xl);
+      animation: modalSlideIn 0.3s ease-out;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--space-4) var(--space-6);
+      border-bottom: 1px solid var(--gray-200);
+      background: var(--gray-50);
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    }
+
+    .modal-title {
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      color: var(--gray-900);
+      margin: 0;
+    }
+
+    .close-modal {
+      background: none;
+      border: none;
+      font-size: var(--font-size-2xl);
+      color: var(--gray-500);
+      cursor: pointer;
+      padding: var(--space-2);
+      border-radius: var(--radius-full);
+      transition: all var(--transition-fast);
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .close-modal:hover {
+      background: var(--gray-200);
+      color: var(--gray-700);
+    }
+
+    .modal-body {
+      padding: var(--space-6);
+      text-align: center;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    .modal-image {
+      max-width: 100%;
+      max-height: 60vh;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      object-fit: contain;
+    }
+
+    .modal-image-container {
+      position: relative;
+      display: inline-block;
+    }
+
+    .image-zoom-controls {
+      position: absolute;
+      top: var(--space-4);
+      right: var(--space-4);
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .zoom-btn {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-full);
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      transition: all var(--transition-fast);
+    }
+
+    .zoom-btn:hover {
+      background: var(--white);
+      border-color: #667eea;
+      color: #667eea;
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* Responsive Modal */
+    @media (max-width: 768px) {
+      .modal-content {
+        width: 95%;
+        margin: 10% auto;
+      }
+      
+      .modal-header {
+        padding: var(--space-3) var(--space-4);
+      }
+      
+      .modal-body {
+        padding: var(--space-4);
+      }
+      
+      .modal-image {
+        max-height: 50vh;
+      }
+    }
+
+    .balance-display {
+      background: var(--primary-gradient);
+      color: var(--white);
+      padding: var(--space-4) var(--space-6);
+      border-radius: var(--radius-lg);
+      margin-bottom: var(--space-6);
+      text-align: center;
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+    }
+
+    .alert {
+      padding: var(--space-4);
+      border-radius: var(--radius-lg);
+      margin-bottom: var(--space-6);
+      font-size: var(--font-size-sm);
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .alert-success {
+      background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .alert-error {
+      background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-fade-in {
+      animation: fadeInUp 0.6s ease-out;
+    }
+
+    .animate-delay-1 { animation-delay: 0.1s; }
+    .animate-delay-2 { animation-delay: 0.2s; }
+    .animate-delay-3 { animation-delay: 0.3s; }
+    .animate-delay-4 { animation-delay: 0.4s; }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .dashboard-container {
+        padding: var(--space-4);
+      }
+
+      .dashboard-header {
+        padding: var(--space-4) var(--space-6);
+      }
+
+      .cards-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-4);
+      }
+
+      .section {
+        padding: var(--space-6);
+        margin: var(--space-4);
+      }
+
+      .table {
+        font-size: var(--font-size-sm);
+      }
+
+      .table th,
+      .table td {
+        padding: var(--space-2) var(--space-3);
+      }
+    }
+  </style>
+</head>
+<body>
+  <script>
+    function openCohortModal() {
+      const modal = document.getElementById('cohortModal');
+      if (modal) {
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeCohortModal() {
+      const modal = document.getElementById('cohortModal');
+      if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+      }
+    }
+
+    async function saveCohortFromDashboard() {
+      const payload = {
+        study_year: document.getElementById('cohort_study_year').value,
+        department: document.getElementById('cohort_department').value,
+        section: document.getElementById('cohort_section').value
+      };
+      try {
+        const res = await fetch('/student/update_cohort', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (!data.success) { showNotification('Save failed: ' + (data.message || ''), 'error'); return; }
+        showNotification('Class details saved', 'success');
+        closeCohortModal();
+        setTimeout(() => location.reload(), 600);
+      } catch (e) {
+        showNotification('Save failed', 'error');
+      }
+    }
+    async function toggleCard(cardId) {
+      try {
+        const res = await fetch(`/nfc/cards/${encodeURIComponent(cardId)}/toggle`, { method: 'POST' });
+        const txt = await res.text();
+        showNotification(txt, res.ok ? 'success' : 'error');
+      } catch (e) {
+        showNotification('Failed to toggle card status', 'error');
+      } finally {
+        setTimeout(() => location.reload(), 500);
+      }
+    }
+  </script>
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div class="dashboard-container">
+        {% for message in messages %}
+          <div class="alert alert-success animate-fade-in">
+            <span>✓</span>
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="dashboard-container">
+    <!-- Welcome Section -->
+    <div class="student-welcome">
+      <h1 class="welcome-title">Welcome back, {{ session.username }}! 👋</h1>
+      <p class="welcome-subtitle">Your digital wallet for seamless campus transactions</p>
+    </div>
+
+    <!-- Balance Card -->
+    <div class="balance-card">
+      <div class="balance-amount">₹{{ user_credits if user_credits else 0 }}</div>
+      <div class="balance-label">Available Credits</div>
+      {% if result_status %}
+      <div style="margin-top:8px;">
+        {% if result_status == 'passed' %}
+          <span class="badge" style="background:#16a34a; color:#fff; padding:6px 10px; border-radius:999px;">Result: PASSED{% if roll_no %} ({{ roll_no }}){% endif %}</span>
+        {% else %}
+          <span class="badge" style="background:#6b7280; color:#fff; padding:6px 10px; border-radius:999px;">Result: Not in latest list{% if roll_no %} ({{ roll_no }}){% endif %}</span>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <a href="/proceed_payment" class="quick-action-btn">
+        <span class="quick-action-icon">💳</span>
+        <span class="quick-action-text">NFC Payment</span>
+      </a>
+      <a href="/college_payment" class="quick-action-btn">
+        <span class="quick-action-icon">🎓</span>
+        <span class="quick-action-text">College Fees</span>
+      </a>
+      <a href="/question-papers" class="quick-action-btn">
+        <span class="quick-action-icon">📚</span>
+        <span class="quick-action-text">Question Papers</span>
+      </a>
+      <a href="/mock_exam" class="quick-action-btn">
+        <span class="quick-action-icon">📝</span>
+        <span class="quick-action-text">Mock Exam</span>
+      </a>
+      <a href="/results" class="quick-action-btn">
+        <span class="quick-action-icon">📄</span>
+        <span class="quick-action-text">View Results</span>
+      </a>
+      <a href="/student_chat" class="quick-action-btn">
+        <span class="quick-action-icon">💬</span>
+        <span class="quick-action-text">Student Chatbot</span>
+      </a>
+      <a href="/student/profile" class="quick-action-btn">
+        <span class="quick-action-icon">🧾</span>
+        <span class="quick-action-text">Student Profile</span>
+      </a>
+      <a href="/debug_gemini" class="quick-action-btn">
+        <span class="quick-action-icon">🔍</span>
+        <span class="quick-action-text">Debug AI</span>
+      </a>
+      <a href="/test_single_evaluation" class="quick-action-btn">
+        <span class="quick-action-icon">🧪</span>
+        <span class="quick-action-text">Test Scoring</span>
+      </a>
+      <a href="/create_custom_exam" class="quick-action-btn">
+        <span class="quick-action-icon">🎯</span>
+        <span class="quick-action-text">Custom Exam</span>
+      </a>
+      <a href="/exam_history" class="quick-action-btn">
+        <span class="quick-action-icon">📊</span>
+        <span class="quick-action-text">Exam History</span>
+      </a>
+      <a href="#" class="quick-action-btn" onclick="showSection('submit')">
+        <span class="quick-action-icon">📤</span>
+        <span class="quick-action-text">Submit Payment</span>
+      </a>
+      <a href="/learning_pods" class="quick-action-btn">
+        <span class="quick-action-icon">👥</span>
+        <span class="quick-action-text">Learning Pods</span>
+      </a>
+    </div>
+
+    <!-- Main Dashboard Cards -->
+    <div class="cards-grid">
+      <div class="dashboard-card animate-fade-in animate-delay-1" onclick="showSection('submit')">
+        <span class="card-icon">📤</span>
+        <h3 class="card-title">Submit Payment</h3>
+        <p class="card-description">Upload proof and payment amount to get credits added to your account.</p>
+      </div>
+      
+      <div class="dashboard-card animate-fade-in animate-delay-2" onclick="showSection('refund')">
+        <span class="card-icon">💰</span>
+        <h3 class="card-title">Request Refund</h3>
+        <p class="card-description">Submit a refund request for your unused credits.</p>
+      </div>
+      
+      <div class="dashboard-card animate-fade-in animate-delay-3" onclick="showSection('profile')">
+        <span class="card-icon">👤</span>
+        <h3 class="card-title">Profile</h3>
+        <p class="card-description">View and manage your account details and settings.</p>
+      </div>
+      
+      <div class="dashboard-card animate-fade-in animate-delay-4" onclick="showSection('history')">
+        <span class="card-icon">📊</span>
+        <h3 class="card-title">Transaction History</h3>
+        <p class="card-description">View your recent payments and transaction records.</p>
+      </div>
+      
+      <div class="dashboard-card animate-fade-in animate-delay-1" onclick="showSection('payment_proofs')">
+        <span class="card-icon">📋</span>
+        <h3 class="card-title">Payment Proofs</h3>
+        <p class="card-description">Track your submitted payment proofs and their status.</p>
+      </div>
+      
+      <div class="dashboard-card animate-fade-in animate-delay-2" onclick="showSection('college_payments')">
+        <span class="card-icon">🏛️</span>
+        <h3 class="card-title">College Payments</h3>
+        <p class="card-description">View your college payment history and receipts.</p>
+      </div>
+      
+      <div class="dashboard-card animate-fade-in animate-delay-3" onclick="showSection('refund_requests')">
+        <span class="card-icon">🔄</span>
+        <h3 class="card-title">Refund Requests</h3>
+        <p class="card-description">Monitor your refund request status and history.</p>
+      </div>
+      
+      <div class="dashboard-card animate-fade-in animate-delay-4" onclick="location.href='/contests'">
+        <span class="card-icon">🏆</span>
+        <h3 class="card-title">Exam Contests</h3>
+        <p class="card-description">Participate in exciting exam contests and compete with your peers!</p>
+      </div>
+      
+      {% if session.role == 'admin' %}
+      <div class="dashboard-card animate-fade-in animate-delay-4" onclick="location.href='/admin'">
+        <span class="card-icon">🔧</span>
+        <h3 class="card-title">Admin Dashboard</h3>
+        <p class="card-description">Access administrative tools and user management.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Sections -->
+    <div id="submit" class="section active">
+      <h2 class="section-title">Submit Payment Proof</h2>
+      <form action="/submit_payment" method="POST" enctype="multipart/form-data" class="payment-form">
+        <div class="form-group">
+          <label for="proof" class="form-label">📎 Payment Proof (Image/PDF)</label>
+          <input type="file" id="proof" name="proof" class="form-input" accept="image/*,.pdf" required>
+          <small style="color: var(--gray-500); margin-top: var(--space-1); display: block;">Upload a clear image or PDF of your payment receipt</small>
+        </div>
+        <div class="form-group">
+          <label for="amount" class="form-label">💰 Amount (₹)</label>
+          <input type="number" id="amount" name="amount" class="form-input" placeholder="Enter payment amount" required min="1" step="0.01">
+        </div>
+        <div class="form-group">
+          <label for="note" class="form-label">📝 Additional Notes (Optional)</label>
+          <textarea id="note" name="note" class="form-textarea" placeholder="Add any additional information about this payment..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-success">
+          <span>📤</span>
+          Submit Payment Proof
+        </button>
+      </form>
+    </div>
+
+    <div id="refund" class="section">
+      <h2 class="section-title">Request Refund</h2>
+      <div class="balance-card" style="margin-bottom: var(--space-6);">
+        <div class="balance-amount">₹{{ user_credits if user_credits else 0 }}</div>
+        <div class="balance-label">Available for Refund</div>
+      </div>
+      <form action="/request_refund" method="POST" class="refund-form">
+        <div class="form-group">
+          <label for="refund_amount" class="form-label">💰 Refund Amount (₹)</label>
+          <input type="number" id="refund_amount" name="amount" class="form-input" placeholder="Enter refund amount" required min="1" max="{{ user_credits if user_credits else 0 }}" step="0.01">
+          <small style="color: var(--gray-500); margin-top: var(--space-1); display: block;">Maximum: ₹{{ user_credits if user_credits else 0 }}</small>
+        </div>
+        <div class="form-group">
+          <label for="refund_reason" class="form-label">📝 Reason for Refund</label>
+          <textarea id="refund_reason" name="reason" class="form-textarea" placeholder="Please provide a detailed reason for requesting this refund..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn-warning">
+          <span>💰</span>
+          Request Refund
+        </button>
+      </form>
+    </div>
+
+    <div id="profile" class="section">
+      <h2 class="section-title">Profile Information</h2>
+      <div class="profile-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-6);">
+        <div class="card">
+          <div class="card-body">
+            <h3 class="card-title">👤 Account Details</h3>
+            <div class="d-flex" style="flex-direction: column; gap: var(--space-3);">
+              <div class="d-flex justify-between align-center" style="padding: var(--space-3); background: var(--gray-50); border-radius: var(--radius-lg);">
+                <span class="form-label" style="margin: 0;">Username:</span>
+                <span style="font-weight: var(--font-semibold); color: var(--gray-900);">{{ session.username }}</span>
+              </div>
+              <div class="d-flex justify-between align-center" style="padding: var(--space-3); background: var(--gray-50); border-radius: var(--radius-lg);">
+                <span class="form-label" style="margin: 0;">Role:</span>
+                <span style="font-weight: var(--font-semibold); color: var(--primary); text-transform: capitalize;">{{ session.role }}</span>
+              </div>
+      <div class="d-flex justify-between align-center" style="padding: var(--space-3); background: var(--gray-50); border-radius: var(--radius-lg);">
+        <span class="form-label" style="margin: 0;">Class:</span>
+        <span style="font-weight: var(--font-semibold); color: var(--gray-900);">
+          {% if user and (user.study_year or user.department or user.section) %}
+            {{ user.study_year or '-' }} {{ user.department or '' }} {{ user.section or '' }}
+          {% else %}
+            <span style="color:#9ca3af;">Not set</span>
+          {% endif %}
+        </span>
+      </div>
+              <div class="d-flex justify-between align-center" style="padding: var(--space-3); background: var(--success-light); border-radius: var(--radius-lg);">
+                <span class="form-label" style="margin: 0;">Credits:</span>
+                <span style="font-weight: var(--font-bold); color: var(--success); font-size: var(--font-size-lg);">₹{{ user_credits if user_credits else 0 }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <h3 class="card-title">⚙️ Quick Actions</h3>
+            <div class="d-flex" style="flex-direction: column; gap: var(--space-3);">
+            <button class="btn btn-primary" onclick="showSection('submit')" style="justify-content: flex-start;">
+              <span>📤</span>
+              Submit Payment
+            </button>
+            <button class="btn" style="justify-content: flex-start; background:#10b981;" onclick="openCohortModal()">
+              <span>📝</span>
+              Update Class Details
+            </button>
+            <a href="/nfc/register" class="btn" style="justify-content: flex-start; text-decoration: none;">
+              <span>💳</span>
+              Register NFC Card
+            </a>
+            <button class="btn btn-warning" onclick="showSection('refund')" style="justify-content: flex-start;">
+              <span>💰</span>
+              Request Refund
+            </button>
+            <a href="/logout" class="btn btn-danger" style="justify-content: flex-start; text-decoration: none;">
+              <span>🚪</span>
+              Logout
+            </a>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+            <h3 class="card-title">💳 NFC Cards</h3>
+            <a href="{{ url_for('nfc_pin_management') }}" class="btn btn-primary" style="padding: var(--space-2) var(--space-3); font-size: var(--font-size-sm);">
+              🔒 Manage PINs
+            </a>
+          </div>
+          {% if nfc_cards and nfc_cards|length > 0 %}
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Card ID</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for card in nfc_cards %}
+              <tr>
+                <td>{{ card.card_id }}</td>
+                <td>
+                  <span class="badge {{ 'badge-success' if card.status == 'active' else 'badge-danger' }}">{{ card.status }}</span>
+                </td>
+                <td>
+                  <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer;">
+                    <input type="checkbox" onchange="toggleCard('{{ card.card_id }}')" {{ 'checked' if card.status == 'active' else '' }} />
+                    <span>{{ 'Active' if card.status == 'active' else 'Inactive' }}</span>
+                  </label>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+            <p>No NFC cards registered. Use NFC to register from payments screen.</p>
+          {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="history" class="section">
+      <h2 class="section-title">Transaction History</h2>
+      
+      <!-- Filter Controls -->
+      <div style="margin-bottom: var(--space-6); text-align: center;">
+        <div style="display: inline-flex; gap: var(--space-4); align-items: center; background: var(--white); padding: var(--space-4); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
+          <label style="font-weight: 600; color: var(--gray-700);">Filter:</label>
+          <button onclick="filterTransactions('all')" class="filter-btn active" id="filter-all">All</button>
+          <button onclick="filterTransactions('credited')" class="filter-btn" id="filter-credited">Credited</button>
+          <button onclick="filterTransactions('debited')" class="filter-btn" id="filter-debited">Debited</button>
+        </div>
+      </div>
+      
+      {% if transactions %}
+        <table class="table" id="transactions-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>From</th>
+              <th>To</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for transaction in transactions %}
+            <tr class="transaction-row" data-type="{{ 'credited' if transaction.to_user == session.username else 'debited' }}">
+              <td>{{ transaction.date.strftime('%Y-%m-%d %H:%M') if transaction.date else 'N/A' }}</td>
+              <td>
+                <span class="badge badge-{{ 'success' if transaction.to_user == session.username else 'danger' }}">
+                  {{ 'Credited' if transaction.to_user == session.username else 'Debited' }}
+                </span>
+              </td>
+              <td>{{ transaction.from_user }}</td>
+              <td>{{ transaction.to_user }}</td>
+              <td>₹{{ transaction.amount }}</td>
+              <td>
+                <span class="badge badge-success">Completed</span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="text-center">No transaction history available.</p>
+      {% endif %}
+    </div>
+
+    <div id="payment_proofs" class="section">
+      <h2 class="section-title">Payment Proofs</h2>
+      {% if payment_proofs %}
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Proof</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for proof in payment_proofs %}
+            <tr>
+              <td>{{ proof.submitted_at }}</td>
+              <td>₹{{ proof.amount }}</td>
+              <td>
+                <span class="badge badge-{{ 'success' if proof.status == 'approved' else 'warning' if proof.status == 'pending' else 'danger' }}">
+                  {{ proof.status }}
+                </span>
+              </td>
+              <td>
+                {% if proof.proof_file %}
+                  <button class="btn btn-sm view-proof-btn" 
+                          data-image-url="{{ url_for('static', filename='uploads/' + proof.proof_file) }}" 
+                          data-file-name="{{ proof.proof_file }}">View</button>
+                {% else %}
+                  N/A
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="text-center">No payment proofs submitted yet.</p>
+      {% endif %}
+    </div>
+
+    <div id="college_payments" class="section">
+      <h2 class="section-title">College Payments</h2>
+      {% if college_payments %}
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Fee Type</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for payment in college_payments %}
+            <tr>
+              <td>{{ payment.payment_date }}</td>
+              <td>{{ payment.fee_type }}</td>
+              <td>₹{{ payment.amount }}</td>
+              <td>
+                <span class="badge badge-{{ 'success' if payment.status == 'paid' else 'warning' if payment.status == 'pending' else 'danger' }}">
+                  {{ payment.status }}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="text-center">No college payments found.</p>
+      {% endif %}
+    </div>
+
+    <div id="refund_requests" class="section">
+      <h2 class="section-title">Refund Requests</h2>
+      {% if refund_requests %}
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Reason</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for request in refund_requests %}
+            <tr>
+              <td>{{ request.requested_at }}</td>
+              <td>₹{{ request.amount }}</td>
+              <td>{{ request.reason }}</td>
+              <td>
+                <span class="badge badge-{{ 'success' if request.status == 'approved' else 'warning' if request.status == 'pending' else 'danger' }}">
+                  {{ request.status }}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="text-center">No refund requests found.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Image Modal -->
+  <div id="imageModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">Payment Proof</h3>
+        <button class="close-modal" onclick="closeImageModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-image-container">
+          <img id="modalImage" class="modal-image" src="" alt="Payment Proof">
+          <div class="image-zoom-controls">
+            <button class="zoom-btn" onclick="zoomIn()" title="Zoom In">+</button>
+            <button class="zoom-btn" onclick="zoomOut()" title="Zoom Out">−</button>
+            <button class="zoom-btn" onclick="resetZoom()" title="Reset Zoom">↺</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cohort Update Modal -->
+  <div id="cohortModal" class="modal">
+    <div class="modal-content" style="max-width:520px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Update Class Details</h3>
+        <button class="close-modal" onclick="closeCohortModal()">&times;</button>
+      </div>
+      <div class="modal-body" style="text-align:left;">
+        <div class="form-group">
+          <label class="form-label">Study Year</label>
+          <input id="cohort_study_year" class="form-input" type="number" min="1" max="6" placeholder="e.g., 3" value="{{ user.study_year or '' }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Department</label>
+          <input id="cohort_department" class="form-input" type="text" placeholder="e.g., CSE" value="{{ user.department or '' }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Section</label>
+          <input id="cohort_section" class="form-input" type="text" placeholder="e.g., A" value="{{ user.section or '' }}">
+        </div>
+        <div style="display:flex; gap:12px; justify-content:flex-end;">
+          <button class="btn btn-danger" type="button" onclick="closeCohortModal()">Cancel</button>
+          <button class="btn btn-success" type="button" onclick="saveCohortFromDashboard()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Enhanced Dashboard Functionality
+    function showSection(sectionId) {
+      // Hide all sections with smooth transition
+      const sections = document.querySelectorAll('.section');
+      sections.forEach(section => {
+        section.style.opacity = '0';
+        section.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+          section.classList.remove('active');
+        }, 150);
+      });
+      
+      // Show the selected section with animation
+      setTimeout(() => {
+        const selectedSection = document.getElementById(sectionId);
+        if (selectedSection) {
+          selectedSection.classList.add('active');
+          selectedSection.style.opacity = '1';
+          selectedSection.style.transform = 'translateY(0)';
+        }
+      }, 150);
+    }
+
+    function filterTransactions(type) {
+      // Update active filter button with animation
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.transform = 'scale(1)';
+      });
+      
+      const activeBtn = document.getElementById('filter-' + type);
+      if (activeBtn) {
+        activeBtn.classList.add('active');
+        activeBtn.style.transform = 'scale(1.05)';
+      }
+      
+      // Filter transaction rows with smooth animation
+      const rows = document.querySelectorAll('.transaction-row');
+      rows.forEach((row, index) => {
+        const transactionType = row.getAttribute('data-type');
+        
+        if (type === 'all' || transactionType === type) {
+          setTimeout(() => {
+            row.classList.remove('hidden');
+            row.style.opacity = '1';
+            row.style.transform = 'translateX(0)';
+          }, index * 50);
+        } else {
+          row.style.opacity = '0';
+          row.style.transform = 'translateX(-20px)';
+          setTimeout(() => {
+            row.classList.add('hidden');
+          }, 200);
+        }
+      });
+    }
+
+    // Enhanced form validation
+    function validateForm(formType) {
+      const forms = {
+        payment: document.querySelector('.payment-form'),
+        refund: document.querySelector('.refund-form')
+      };
+      
+      const form = forms[formType];
+      if (!form) return true;
+      
+      const inputs = form.querySelectorAll('input[required], textarea[required]');
+      let isValid = true;
+      
+      inputs.forEach(input => {
+        if (!input.value.trim()) {
+          input.style.borderColor = 'var(--danger)';
+          input.style.boxShadow = '0 0 0 3px var(--danger-light)';
+          isValid = false;
+        } else {
+          input.style.borderColor = 'var(--success)';
+          input.style.boxShadow = '0 0 0 3px var(--success-light)';
+        }
+      });
+      
+      return isValid;
+    }
+
+    // File upload preview
+    function previewFile(input) {
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+          // Create preview element
+          let preview = document.getElementById('file-preview');
+          if (!preview) {
+            preview = document.createElement('div');
+            preview.id = 'file-preview';
+            preview.style.cssText = `
+              margin-top: var(--space-3);
+              padding: var(--space-4);
+              background: var(--gray-50);
+              border-radius: var(--radius-lg);
+              border: 2px dashed var(--gray-300);
+              text-align: center;
+            `;
+            input.parentNode.appendChild(preview);
+          }
+          
+          if (file.type.startsWith('image/')) {
+            preview.innerHTML = `
+              <img src="${e.target.result}" style="max-width: 200px; max-height: 150px; border-radius: var(--radius-md); margin-bottom: var(--space-2);">
+              <p style="color: var(--gray-600); font-size: var(--font-size-sm);">${file.name}</p>
+            `;
+          } else {
+            preview.innerHTML = `
+              <div style="font-size: 3rem; margin-bottom: var(--space-2);">📄</div>
+              <p style="color: var(--gray-600); font-size: var(--font-size-sm);">${file.name}</p>
+            `;
+          }
+        };
+        
+        reader.readAsDataURL(file);
+      }
+    }
+
+    // Enhanced animations and interactions
+    document.addEventListener('DOMContentLoaded', function() {
+      // Add loading states to forms
+      const forms = document.querySelectorAll('form');
+      forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+          const submitBtn = form.querySelector('button[type="submit"]');
+          if (submitBtn) {
+            submitBtn.innerHTML = '<span class="loading"></span> Processing...';
+            submitBtn.disabled = true;
+          }
+        });
+      });
+      
+      // Add file upload preview
+      const fileInput = document.getElementById('proof');
+      if (fileInput) {
+        fileInput.addEventListener('change', function() {
+          previewFile(this);
+        });
+      }
+      
+      // Add smooth scrolling for better UX
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute('href'));
+          if (target) {
+            target.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }
+        });
+      });
+      
+      // Add keyboard navigation
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          // Close any open modals or sections
+          const activeSection = document.querySelector('.section.active');
+          if (activeSection && activeSection.id !== 'submit') {
+            showSection('submit');
+          }
+        }
+      });
+      
+      // Removed auto scroll on touch to prevent jumpy scrolling on mobile
+    });
+
+    // Enhanced error handling
+    function showNotification(message, type = 'info') {
+      const notification = document.createElement('div');
+      notification.className = `alert alert-${type}`;
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        animation: slideInRight 0.3s ease-out;
+      `;
+      notification.innerHTML = `
+        <span>${type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ'}</span>
+        ${message}
+      `;
+      
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease-out';
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 300);
+      }, 3000);
+    }
+
+    // Add CSS for animations
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      @keyframes slideOutRight {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+      }
+      .loading {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Modal functionality
+    let currentZoom = 1;
+    const zoomStep = 0.2;
+    const maxZoom = 3;
+    const minZoom = 0.5;
+
+    function openImageModal(imageSrc, fileName) {
+      const modal = document.getElementById('imageModal');
+      const modalImage = document.getElementById('modalImage');
+      const modalTitle = document.getElementById('modalTitle');
+      
+      modalImage.src = imageSrc;
+      modalTitle.textContent = `Payment Proof: ${fileName}`;
+      modal.style.display = 'block';
+      
+      // Reset zoom
+      currentZoom = 1;
+      modalImage.style.transform = `scale(${currentZoom})`;
+      
+      // Prevent body scroll
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeImageModal() {
+      const modal = document.getElementById('imageModal');
+      modal.style.display = 'none';
+      
+      // Restore body scroll
+      document.body.style.overflow = 'auto';
+    }
+
+    function zoomIn() {
+      if (currentZoom < maxZoom) {
+        currentZoom += zoomStep;
+        updateImageZoom();
+      }
+    }
+
+    function zoomOut() {
+      if (currentZoom > minZoom) {
+        currentZoom -= zoomStep;
+        updateImageZoom();
+      }
+    }
+
+    function resetZoom() {
+      currentZoom = 1;
+      updateImageZoom();
+    }
+
+    function updateImageZoom() {
+      const modalImage = document.getElementById('modalImage');
+      modalImage.style.transform = `scale(${currentZoom})`;
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+      const image = document.getElementById('imageModal');
+      const cohort = document.getElementById('cohortModal');
+      if (event.target === image) closeImageModal();
+      if (event.target === cohort) closeCohortModal();
+    }
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        closeImageModal();
+      }
+    });
+
+    // Add event listeners for view proof buttons
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.view-proof-btn').forEach(button => {
+        button.addEventListener('click', function() {
+          const imageUrl = this.getAttribute('data-image-url');
+          const fileName = this.getAttribute('data-file-name');
+          openImageModal(imageUrl, fileName);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

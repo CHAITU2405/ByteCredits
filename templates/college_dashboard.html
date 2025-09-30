@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>College Dashboard - ByteCredits</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* College Dashboard Specific Styles */
+        .college-welcome {
+            text-align: center;
+            margin-bottom: var(--space-8);
+            padding: var(--space-8) 0;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border-radius: var(--radius-lg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .college-welcome::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .college-welcome .welcome-title {
+            font-size: var(--text-4xl);
+            font-weight: var(--font-bold);
+            margin-bottom: var(--space-2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .college-welcome .welcome-subtitle {
+            font-size: var(--text-lg);
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .college-actions {
+            display: flex;
+            gap: var(--space-4);
+            justify-content: center;
+            margin-bottom: var(--space-8);
+            flex-wrap: wrap;
+        }
+
+        .college-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-normal);
+            cursor: pointer;
+            border: 1px solid var(--gray-200);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .college-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transform: scaleX(0);
+            transition: transform var(--transition-normal);
+        }
+
+        .college-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .college-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-light);
+        }
+
+        .college-card .card-icon {
+            font-size: var(--text-3xl);
+            margin-bottom: var(--space-4);
+            display: block;
+        }
+
+        .college-card .card-title {
+            font-size: var(--text-xl);
+            font-weight: var(--font-semibold);
+            color: var(--gray-900);
+            margin-bottom: var(--space-2);
+        }
+
+        .college-card .card-description {
+            color: var(--gray-600);
+            line-height: var(--line-height-relaxed);
+        }
+
+        .payment-status {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-1);
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-full);
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+        }
+
+        .payment-status.completed {
+            background: var(--success-light);
+            color: var(--success-dark);
+        }
+
+        .payment-status.pending {
+            background: var(--warning-light);
+            color: var(--warning-dark);
+        }
+
+        .payment-status.failed {
+            background: var(--danger-light);
+            color: var(--danger-dark);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-6);
+            margin-bottom: var(--space-8);
+        }
+
+        .summary-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            transition: all var(--transition-normal);
+        }
+
+        .summary-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .summary-card .summary-number {
+            font-size: var(--text-3xl);
+            font-weight: var(--font-bold);
+            color: var(--primary);
+            margin-bottom: var(--space-2);
+        }
+
+        .summary-card .summary-label {
+            color: var(--gray-600);
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+        }
+
+        .table-container {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+        }
+
+        .table-header {
+            background: var(--gray-50);
+            padding: var(--space-4) var(--space-6);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .table-title {
+            font-size: var(--text-xl);
+            font-weight: var(--font-semibold);
+            color: var(--gray-900);
+            margin: 0;
+        }
+
+        .table-content {
+            overflow-x: auto;
+        }
+
+        .table {
+                width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+        }
+
+        .table th {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            font-weight: var(--font-semibold);
+            padding: var(--space-4);
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .table td {
+            padding: var(--space-4);
+            border-bottom: 1px solid var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        .table tbody tr:hover {
+            background: var(--gray-50);
+        }
+
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--space-12);
+            color: var(--gray-500);
+        }
+
+        .empty-state .empty-icon {
+            font-size: var(--text-4xl);
+            margin-bottom: var(--space-4);
+            opacity: 0.5;
+        }
+
+        .empty-state .empty-title {
+            font-size: var(--text-lg);
+            font-weight: var(--font-semibold);
+            margin-bottom: var(--space-2);
+        }
+
+        .empty-state .empty-description {
+            color: var(--gray-400);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .college-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .college-card {
+                width: 100%;
+                max-width: 400px;
+            }
+
+            .summary-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: var(--space-4);
+            }
+
+            .table-container {
+                border-radius: var(--radius-md);
+            }
+
+            .table th,
+            .table td {
+                padding: var(--space-3);
+                font-size: var(--text-sm);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .college-welcome {
+                padding: var(--space-6) var(--space-4);
+            }
+
+            .college-welcome .welcome-title {
+                font-size: var(--text-2xl);
+            }
+
+            .college-welcome .welcome-subtitle {
+                font-size: var(--text-base);
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="dashboard-container">
+                {% for message in messages %}
+                    <div class="alert alert-success animate-fade-in">
+                        <span>✓</span>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="dashboard-container">
+        <!-- Welcome Section -->
+        <div class="college-welcome">
+            <h1 class="welcome-title">College Portal 🏛️</h1>
+            <p class="welcome-subtitle">Welcome, {{ session.username }}! Manage payments and financial records</p>
+        </div>
+
+        <!-- Statistics Overview -->
+        <div class="stats-grid">
+            <div class="stat-card animate-fade-in animate-delay-1">
+            <div class="stat-number">{{ stats.total_payments }}</div>
+            <div class="stat-label">Total Payments</div>
+                <div class="stat-icon">📊</div>
+        </div>
+            <div class="stat-card animate-fade-in animate-delay-2">
+            <div class="stat-number">₹{{ stats.total_amount }}</div>
+            <div class="stat-label">Total Amount Received</div>
+                <div class="stat-icon">💰</div>
+        </div>
+            <div class="stat-card animate-fade-in animate-delay-3">
+            <div class="stat-number">{{ stats.completed_payments }}</div>
+            <div class="stat-label">Completed Payments</div>
+                <div class="stat-icon">✅</div>
+        </div>
+            <div class="stat-card animate-fade-in animate-delay-4">
+            <div class="stat-number">₹{{ stats.current_credits }}</div>
+            <div class="stat-label">Current Balance</div>
+                <div class="stat-icon">💳</div>
+        </div>
+    </div>
+
+        <!-- Quick Actions -->
+        <div class="college-actions">
+            <a href="/logout" class="action-btn">
+                <span class="action-icon">🚪</span>
+                <span class="action-text">Logout</span>
+            </a>
+            <a href="#" class="action-btn" onclick="showSection('payments')">
+                <span class="action-icon">📊</span>
+                <span class="action-text">All Payments</span>
+            </a>
+            <a href="#" class="action-btn" onclick="showSection('recent')">
+                <span class="action-icon">🕒</span>
+                <span class="action-text">Recent</span>
+            </a>
+            <a href="#" class="action-btn" onclick="showSection('summary')">
+                <span class="action-icon">📈</span>
+                <span class="action-text">Summary</span>
+            </a>
+        </div>
+
+        <!-- Dashboard Cards -->
+        <div class="cards-grid">
+            <div class="college-card animate-fade-in animate-delay-1" onclick="showSection('payments')">
+                <span class="card-icon">📊</span>
+                <h3 class="card-title">All College Payments</h3>
+                <p class="card-description">View comprehensive payment transactions with detailed filtering and search capabilities for complete financial oversight.</p>
+        </div>
+            <div class="college-card animate-fade-in animate-delay-2" onclick="showSection('recent')">
+                <span class="card-icon">🕒</span>
+                <h3 class="card-title">Recent Payments</h3>
+                <p class="card-description">Monitor the latest payment activities and track recent transactions for quick financial status updates.</p>
+        </div>
+            <div class="college-card animate-fade-in animate-delay-3" onclick="showSection('summary')">
+                <span class="card-icon">📈</span>
+                <h3 class="card-title">Payment Summary</h3>
+                <p class="card-description">Analyze payment statistics, trends, and comprehensive summaries for informed financial decision making.</p>
+        </div>
+    </div>
+
+    <!-- All Payments Section -->
+    <div id="payments" class="section active">
+            <div class="table-container">
+                <div class="table-header">
+                    <h2 class="table-title">All College Payments</h2>
+                </div>
+                <div class="table-content">
+                    <table class="table">
+                        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Student Name</th>
+                <th>Student ID</th>
+                <th>Fee Type</th>
+                <th>Amount</th>
+                <th>Semester</th>
+                <th>Academic Year</th>
+                <th>Payment Date</th>
+                <th>Status</th>
+            </tr>
+                        </thead>
+                        <tbody>
+            {% if college_payments %}
+                {% for payment in college_payments %}
+                    <tr>
+                        <td>{{ payment.id }}</td>
+                        <td>{{ payment.student_name }}</td>
+                        <td>{{ payment.student_id }}</td>
+                        <td>{{ payment.fee_type.title() }}</td>
+                        <td>₹{{ payment.amount }}</td>
+                        <td>{{ payment.semester or '-' }}</td>
+                        <td>{{ payment.academic_year or '-' }}</td>
+                        <td>{{ payment.payment_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            {% if payment.status == 'completed' %}
+                                                <span class="payment-status completed">✅ Completed</span>
+                            {% elif payment.status == 'pending' %}
+                                                <span class="payment-status pending">⏳ Pending</span>
+                            {% elif payment.status == 'failed' %}
+                                                <span class="payment-status failed">❌ Failed</span>
+                            {% else %}
+                                                <span class="payment-status">{{ payment.status.title() }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                                    <td colspan="9">
+                                        <div class="empty-state">
+                                            <div class="empty-icon">📊</div>
+                                            <div class="empty-title">No Payments Found</div>
+                                            <div class="empty-description">No college payments have been recorded yet.</div>
+                                        </div>
+                                    </td>
+                </tr>
+            {% endif %}
+                        </tbody>
+        </table>
+                </div>
+            </div>
+    </div>
+
+    <!-- Recent Payments Section -->
+    <div id="recent" class="section">
+            <div class="table-container">
+                <div class="table-header">
+                    <h2 class="table-title">Recent College Payments (Last 10)</h2>
+                </div>
+                <div class="table-content">
+                    <table class="table">
+                        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Student Name</th>
+                <th>Student ID</th>
+                <th>Fee Type</th>
+                <th>Amount</th>
+                <th>Payment Date</th>
+                <th>Status</th>
+            </tr>
+                        </thead>
+                        <tbody>
+            {% if recent_payments %}
+                {% for payment in recent_payments %}
+                    <tr>
+                        <td>{{ payment.id }}</td>
+                        <td>{{ payment.student_name }}</td>
+                        <td>{{ payment.student_id }}</td>
+                        <td>{{ payment.fee_type.title() }}</td>
+                        <td>₹{{ payment.amount }}</td>
+                        <td>{{ payment.payment_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            {% if payment.status == 'completed' %}
+                                                <span class="payment-status completed">✅ Completed</span>
+                            {% elif payment.status == 'pending' %}
+                                                <span class="payment-status pending">⏳ Pending</span>
+                            {% elif payment.status == 'failed' %}
+                                                <span class="payment-status failed">❌ Failed</span>
+                            {% else %}
+                                                <span class="payment-status">{{ payment.status.title() }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                                    <td colspan="7">
+                                        <div class="empty-state">
+                                            <div class="empty-icon">🕒</div>
+                                            <div class="empty-title">No Recent Payments</div>
+                                            <div class="empty-description">No recent payment activities found.</div>
+                                        </div>
+                                    </td>
+                </tr>
+            {% endif %}
+                        </tbody>
+        </table>
+                </div>
+            </div>
+    </div>
+
+    <!-- Payment Summary Section -->
+    <div id="summary" class="section">
+            <div class="dashboard-card">
+                <h2 class="dashboard-title">Payment Summary</h2>
+                <p class="dashboard-subtitle">Comprehensive analysis of payment statistics and trends</p>
+                
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="summary-number">{{ summary.by_fee_type|length }}</div>
+                        <div class="summary-label">Different Fee Types</div>
+            </div>
+                    <div class="summary-card">
+                        <div class="summary-number">{{ summary.unique_students }}</div>
+                        <div class="summary-label">Unique Students</div>
+            </div>
+                    <div class="summary-card">
+                        <div class="summary-number">₹{{ summary.average_amount }}</div>
+                        <div class="summary-label">Average Payment Amount</div>
+            </div>
+        </div>
+
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3 class="table-title">Payments by Fee Type</h3>
+                    </div>
+                    <div class="table-content">
+                        <table class="table">
+                            <thead>
+            <tr>
+                <th>Fee Type</th>
+                <th>Count</th>
+                <th>Total Amount</th>
+            </tr>
+                            </thead>
+                            <tbody>
+            {% for fee_type, data in summary.by_fee_type.items() %}
+                <tr>
+                    <td>{{ fee_type.title() }}</td>
+                    <td>{{ data.count }}</td>
+                    <td>₹{{ data.total }}</td>
+                </tr>
+            {% endfor %}
+                            </tbody>
+        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showSection(id) {
+            // Hide all sections with smooth transition
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => {
+                section.style.opacity = '0';
+                section.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                section.classList.remove('active');
+                }, 150);
+            });
+            
+            // Show selected section with smooth transition
+            setTimeout(() => {
+                const selectedSection = document.getElementById(id);
+                if (selectedSection) {
+                    selectedSection.classList.add('active');
+                    selectedSection.style.opacity = '1';
+                    selectedSection.style.transform = 'translateY(0)';
+                }
+            }, 150);
+        }
+
+        // Enhanced interaction functions
+        function enhanceInteractions() {
+            // Add ripple effect to buttons and cards
+            document.querySelectorAll('.btn, .college-card, .action-btn').forEach(element => {
+                element.addEventListener('click', function(e) {
+                    const ripple = document.createElement('span');
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.width = ripple.style.height = size + 'px';
+                    ripple.style.left = x + 'px';
+                    ripple.style.top = y + 'px';
+                    ripple.classList.add('ripple');
+                    
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+
+            // Add smooth scrolling
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+
+            // Add table row hover effects
+            document.querySelectorAll('.table tbody tr').forEach(row => {
+                row.addEventListener('mouseenter', function() {
+                    this.style.transform = 'scale(1.01)';
+                });
+                row.addEventListener('mouseleave', function() {
+                    this.style.transform = 'scale(1)';
+                });
+            });
+        }
+
+        // Keyboard shortcuts
+        function addKeyboardShortcuts() {
+            document.addEventListener('keydown', function(e) {
+                // Ctrl/Cmd + 1-3 for quick navigation
+                if ((e.ctrlKey || e.metaKey) && e.key >= '1' && e.key <= '3') {
+                    e.preventDefault();
+                    const sections = ['payments', 'recent', 'summary'];
+                    const sectionIndex = parseInt(e.key) - 1;
+                    if (sections[sectionIndex]) {
+                        showSection(sections[sectionIndex]);
+                    }
+                }
+                
+                // Escape to go back to payments
+                if (e.key === 'Escape') {
+                    const activeSection = document.querySelector('.section.active');
+                    if (activeSection && activeSection.id !== 'payments') {
+                        showSection('payments');
+                    }
+                }
+            });
+        }
+
+        // Touch gesture support for mobile
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        document.addEventListener('touchstart', function(e) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchend', function(e) {
+            if (!touchStartX || !touchStartY) return;
+            
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            
+            const diffX = touchStartX - touchEndX;
+            const diffY = touchStartY - touchEndY;
+            
+            // Swipe left/right for navigation
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+                const sections = ['payments', 'recent', 'summary'];
+                const currentSection = document.querySelector('.section.active');
+                if (currentSection) {
+                    const currentIndex = sections.indexOf(currentSection.id);
+                    if (currentIndex !== -1) {
+                        if (diffX > 0 && currentIndex < sections.length - 1) {
+                            // Swipe left - next section
+                            showSection(sections[currentIndex + 1]);
+                        } else if (diffX < 0 && currentIndex > 0) {
+                            // Swipe right - previous section
+                            showSection(sections[currentIndex - 1]);
+                        }
+                    }
+                }
+            }
+            
+            touchStartX = 0;
+            touchStartY = 0;
+        });
+
+        // Notification system
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <span class="notification-icon">${type === 'success' ? '✓' : '⚠'}</span>
+                <span class="notification-message">${message}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+            
+            // Auto remove
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }
+
+        // Initialize enhanced interactions
+        document.addEventListener('DOMContentLoaded', function() {
+            enhanceInteractions();
+            addKeyboardShortcuts();
+            
+            // Add loading animation to stat cards
+            const statCards = document.querySelectorAll('.stat-card');
+            statCards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html> 

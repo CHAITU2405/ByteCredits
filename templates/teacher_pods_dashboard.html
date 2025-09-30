@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Pods - Teacher Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .dashboard-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            margin-bottom: 20px;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-2px);
+        }
+        .create-pods-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .pod-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            margin-bottom: 20px;
+        }
+        .pod-card:hover {
+            transform: translateY(-2px);
+        }
+        .pod-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            padding: 20px;
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+        }
+        .member-count {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 5px 15px;
+            font-size: 0.9rem;
+        }
+        .action-btn {
+            border-radius: 20px;
+            padding: 8px 20px;
+            font-size: 0.9rem;
+            margin: 2px;
+        }
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+        }
+        .loading-spinner {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-chalkboard-teacher"></i> Teacher Pods Dashboard
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('teacher_dashboard') }}">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a class="nav-link" href="{{ url_for('pod_analytics') }}">
+                    <i class="fas fa-chart-bar"></i> Analytics
+                </a>
+                <a class="nav-link" href="{{ url_for('logout') }}">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="display-4 text-center mb-4">
+                    <i class="fas fa-users text-primary"></i> Learning Pods Management
+                </h1>
+                <p class="text-center text-muted">Create AI-powered learning pods and manage collaborative learning experiences</p>
+            </div>
+        </div>
+
+        <!-- Create Pods Section -->
+        <div class="create-pods-card">
+            <h3><i class="fas fa-magic"></i> Create AI-Powered Learning Pods</h3>
+            <p class="mb-4">Use AI to automatically group students into optimal learning pods based on their learning styles, strengths, and collaboration preferences.</p>
+            
+            <div class="row justify-content-center">
+                <div class="col-md-3">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                        <input type="number" class="form-control" id="yearInput" min="1" max="6" placeholder="Year (e.g., 3)">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fas fa-building"></i></span>
+                        <input type="text" class="form-control" id="deptInput" placeholder="Department (e.g., CSE)">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fas fa-layer-group"></i></span>
+                        <input type="text" class="form-control" id="sectionInput" placeholder="Section (e.g., A)">
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text">
+                            <i class="fas fa-book"></i>
+                        </span>
+                        <input type="text" class="form-control" id="subjectInput" placeholder="Enter subject name (e.g., Mathematics, Physics)">
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn btn-light btn-lg" onclick="createPods()">
+                <span class="loading-spinner spinner-border spinner-border-sm me-2" role="status"></span>
+                <i class="fas fa-robot"></i> Create AI Pods
+            </button>
+            
+            <div id="createPodsResult" class="mt-3"></div>
+        </div>
+
+        <!-- Statistics -->
+        {% if pods %}
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3>{{ pods|length }}</h3>
+                    <p class="mb-0">Active Pods</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3>{{ pods|sum(attribute='member_count') }}</h3>
+                    <p class="mb-0">Total Students</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3>{{ pods|map(attribute='pod.tasks')|map('length')|sum }}</h3>
+                    <p class="mb-0">Total Tasks</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3>{{ user.role.title() }}</h3>
+                    <p class="mb-0">Your Role</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Pods Grid -->
+        {% if pods %}
+        <div class="row">
+            {% for pod_data in pods %}
+            <div class="col-lg-6 col-xl-4">
+                <div class="card pod-card">
+                    <div class="pod-header">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="card-title mb-1">
+                                    <i class="fas fa-users"></i> {{ pod_data.pod.pod_name }}
+                                </h5>
+                                <p class="mb-1">
+                                    <i class="fas fa-book"></i> {{ pod_data.pod.subject }}
+                                </p>
+                                <small>
+                                    <i class="fas fa-calendar"></i> 
+                                    Cycle {{ pod_data.pod.cycle_number }} • 
+                                    {{ pod_data.pod.created_at.strftime('%b %d, %Y') }}
+                                </small>
+                            </div>
+                            <span class="member-count">
+                                <i class="fas fa-user-friends"></i> {{ pod_data.member_count }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <!-- Pod Members -->
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-user-friends"></i> Members
+                            </h6>
+                            <div class="d-flex flex-wrap">
+                                {% for member in pod_data.members %}
+                                <span class="badge bg-secondary me-1 mb-1">{{ member }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Task Progress -->
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-tasks"></i> Task Progress
+                            </h6>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 75%">
+                                    75% Complete
+                                </div>
+                            </div>
+                            <small class="text-muted">{{ pod_data.pod.tasks|length }} tasks assigned</small>
+                        </div>
+
+                        <!-- Pod Status -->
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-chart-line"></i> Pod Status
+                            </h6>
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="text-success">
+                                        <i class="fas fa-check-circle"></i>
+                                        <div class="small">Active</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-warning">
+                                        <i class="fas fa-users"></i>
+                                        <div class="small">{{ pod_data.member_count }} Members</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-info">
+                                        <i class="fas fa-star"></i>
+                                        <div class="small">Good</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer bg-transparent">
+                        <div class="d-flex flex-wrap gap-2">
+                            <a href="{{ url_for('pod_detail', pod_id=pod_data.pod.id) }}" 
+                               class="btn btn-primary action-btn">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                            <button class="btn btn-success action-btn" 
+                                    onclick="generateTasks({{ pod_data.pod.id }})">
+                                <i class="fas fa-plus"></i> Tasks
+                            </button>
+                            <button class="btn btn-info action-btn" 
+                                    onclick="rotatePod({{ pod_data.pod.id }})">
+                                <i class="fas fa-sync"></i> Rotate
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-users fa-4x text-muted mb-4"></i>
+            <h3 class="text-muted">No Learning Pods Yet</h3>
+            <p class="text-muted">Create your first AI-powered learning pods to get started!</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function createPods() {
+            const subject = document.getElementById('subjectInput').value.trim();
+            if (!subject) {
+                alert('Please enter a subject name');
+                return;
+            }
+
+            const btn = document.querySelector('.btn[onclick="createPods()"]');
+            const spinner = btn.querySelector('.loading-spinner');
+            const resultDiv = document.getElementById('createPodsResult');
+            
+            spinner.style.display = 'inline-block';
+            btn.disabled = true;
+            resultDiv.innerHTML = '';
+
+            fetch('/create_pods', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    subject: subject,
+                    study_year: document.getElementById('yearInput').value,
+                    department: document.getElementById('deptInput').value,
+                    section: document.getElementById('sectionInput').value
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                spinner.style.display = 'none';
+                btn.disabled = false;
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i> 
+                            Successfully created ${data.pods.length} learning pods! 
+                            <a href="#" onclick="location.reload()">Refresh page</a> to see them.
+                        </div>
+                    `;
+                    document.getElementById('subjectInput').value = '';
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            ${data.error || 'Failed to create pods'}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                spinner.style.display = 'none';
+                btn.disabled = false;
+                resultDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        Error: ${error.message}
+                    </div>
+                `;
+            });
+        }
+
+        function generateTasks(podId) {
+            const resultDiv = document.getElementById('createPodsResult');
+            resultDiv.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Generating tasks...</div>';
+
+            fetch(`/generate_pod_tasks/${podId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i> 
+                            Generated ${data.tasks.length} tasks for the pod!
+                        </div>
+                    `;
+                } else {
+                    const errorMsg = data.error || 'Failed to generate tasks';
+                    let alertClass = 'alert-danger';
+                    let icon = 'fas fa-exclamation-triangle';
+                    
+                    if (errorMsg.includes('quota') || errorMsg.includes('rate limit')) {
+                        alertClass = 'alert-warning';
+                        icon = 'fas fa-clock';
+                    }
+                    
+                    resultDiv.innerHTML = `
+                        <div class="alert ${alertClass}">
+                            <i class="${icon}"></i> 
+                            ${errorMsg}
+                            ${errorMsg.includes('quota') ? '<br><small>You can wait a few minutes and try again, or create manual tasks.</small>' : ''}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        Error: ${error.message}
+                    </div>
+                `;
+            });
+        }
+
+        function rotatePod(podId) {
+            if (confirm('Are you sure you want to rotate this pod? This will reshuffle the members.')) {
+                // Implementation for pod rotation
+                alert('Pod rotation feature coming soon!');
+            }
+        }
+    </script>
+</body>
+</html>

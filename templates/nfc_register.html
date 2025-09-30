@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Register NFC Card</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; }
+    .card { max-width: 680px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 16px; padding: 24px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    label { font-weight: 600; color: #111827; display: block; margin-bottom: 6px; }
+    input, select { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 10px; }
+    button { padding: 10px 14px; border-radius: 10px; border: 1px solid #d1d5db; background: #111827; color: #fff; cursor: pointer; }
+    .muted { color: #6b7280; font-size: 14px; }
+    .toggle { display: inline-flex; gap: 8px; align-items: center; }
+    .status { margin-top: 12px; white-space: pre-wrap; }
+  </style>
+  <script>
+    async function registerCard(e) {
+      e.preventDefault();
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const roll = document.getElementById('roll').value.trim();
+      const useMobile = document.getElementById('useMobile').checked;
+      const status = document.getElementById('status');
+      status.textContent = '';
+
+      try {
+        let nfcDataText = null;
+        if (useMobile) {
+          if (!('NDEFReader' in window)) {
+            status.textContent = 'Web NFC not supported on this device/browser.';
+            return;
+          }
+          const payload = { name: '{{ session.username }}', id: 'CARD-' + Math.random().toString(36).slice(2, 10).toUpperCase(), full_name: name, email, roll_no: roll };
+          const ndef = new NDEFReader();
+          await ndef.write(JSON.stringify(payload));
+          status.textContent = 'Written to NFC tag. Now tap again to read & confirm...';
+
+          await ndef.scan();
+          ndef.onreading = async (event) => {
+            let jsonText = '';
+            for (const record of event.message.records) {
+              if (record.recordType === 'text') {
+                jsonText += new TextDecoder().decode(record.data);
+              }
+            }
+            nfcDataText = jsonText;
+            const res = await fetch('/nfc/cards/register', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ type: 'mobile', name, email, roll_no: roll, nfc_data: nfcDataText })
+            });
+            status.textContent = await res.text();
+          };
+          return;
+        } else {
+          // External reader: server writes
+          const res = await fetch('/nfc/cards/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: 'external', name, email, roll_no: roll })
+          });
+          status.textContent = await res.text();
+        }
+      } catch (err) {
+        status.textContent = 'Error: ' + err.message;
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header"><h2>Register NFC Card</h2></div>
+    <div class="card-body">
+    <p class="muted">Enter details, choose reader type, then register and tap your card.</p>
+    <form onsubmit="registerCard(event)">
+      <div class="row">
+        <div>
+          <label for="name">Full Name</label>
+          <input id="name" placeholder="John Doe" required />
+        </div>
+        <div>
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="john@example.com" required />
+        </div>
+      </div>
+      <div class="row" style="margin-top: 12px;">
+        <div>
+          <label for="roll">Roll Number</label>
+          <input id="roll" placeholder="21CSE123" required />
+        </div>
+        <div>
+          <label>Reader Type</label>
+          <div class="toggle">
+            <input type="checkbox" id="useMobile" />
+            <label for="useMobile">Use Mobile Web NFC</label>
+          </div>
+          <div class="muted">Unchecked = External USB reader</div>
+        </div>
+      </div>
+      <div style="margin-top: 16px; display:flex; gap: 8px; align-items:center;">
+        <button type="submit" class="btn btn-primary">Register & Write</button>
+        <a href="/nfc/cards" class="btn btn-secondary">Manage Cards</a>
+      </div>
+      <div id="status" class="status"></div>
+    </form>
+    </div>
+  </div>
+</body>
+</html>
+
+

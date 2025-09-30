@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Teacher Dashboard - ByteCredits</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='ICON.png') }}">
+    <style>
+        /* Teacher Dashboard Specific Styles */
+        .teacher-welcome {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: var(--space-8) var(--space-6);
+            border-radius: var(--radius-2xl);
+            margin-bottom: var(--space-8);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .teacher-welcome::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .welcome-title {
+            font-size: var(--font-size-4xl);
+            font-weight: var(--font-bold);
+            margin-bottom: var(--space-2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .welcome-subtitle {
+            font-size: var(--font-size-lg);
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .teacher-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-8);
+        }
+
+        .action-btn {
+            background: var(--white);
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-xl);
+            padding: var(--space-4);
+            text-align: center;
+            text-decoration: none;
+            color: var(--gray-700);
+            transition: all var(--transition-normal);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-2);
+            min-height: 120px;
+            justify-content: center;
+        }
+
+        .action-btn:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .action-icon {
+            font-size: 2rem;
+        }
+
+        .action-text {
+            font-weight: var(--font-semibold);
+            font-size: var(--font-size-sm);
+        }
+
+        .section {
+            display: none;
+            background: var(--white);
+            padding: var(--space-8);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-lg);
+            margin-bottom: var(--space-8);
+            border: 1px solid var(--gray-200);
+        }
+
+        .section.active {
+            display: block;
+            animation: slideInUp 0.4s ease-out;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-title {
+            font-size: var(--font-size-3xl);
+            color: var(--gray-900);
+            margin-bottom: var(--space-6);
+            font-weight: var(--font-bold);
+            text-align: center;
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -var(--space-2);
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: var(--primary-gradient);
+            border-radius: var(--radius-full);
+        }
+
+        .teacher-card {
+            background: var(--white);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-lg);
+            transition: all var(--transition-normal);
+            cursor: pointer;
+            border: 1px solid var(--gray-200);
+            position: relative;
+            overflow: hidden;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .teacher-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+            transform: scaleX(0);
+            transition: transform var(--transition-normal);
+        }
+
+        .teacher-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-2xl);
+        }
+
+        .teacher-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: var(--space-4);
+            display: block;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+            transition: transform var(--transition-normal);
+        }
+
+        .teacher-card:hover .card-icon {
+            transform: scale(1.1);
+        }
+
+        .card-title {
+            font-size: var(--font-size-xl);
+            color: var(--gray-900);
+            margin-bottom: var(--space-3);
+            font-weight: var(--font-semibold);
+            line-height: var(--leading-tight);
+        }
+
+        .card-description {
+            color: var(--gray-600);
+            font-size: var(--font-size-base);
+            line-height: var(--leading-relaxed);
+            flex-grow: 1;
+        }
+
+        .attendance-status {
+            background: var(--success-light);
+            color: var(--success-hover);
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--radius-lg);
+            font-weight: var(--font-semibold);
+            text-align: center;
+            margin-bottom: var(--space-4);
+            border: 1px solid var(--success);
+        }
+
+        .attendance-status.inactive {
+            background: var(--gray-100);
+            color: var(--gray-600);
+            border-color: var(--gray-300);
+        }
+
+        .attendance-status.active {
+            background: var(--warning-light);
+            color: var(--warning-hover);
+            border-color: var(--warning);
+        }
+
+        .section {
+            display: none;
+            background: var(--white);
+            padding: var(--space-8);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            max-width: 1200px;
+            margin: auto;
+            border: 1px solid var(--gray-200);
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeInUp 0.4s ease-out;
+        }
+
+        .section-title {
+            font-size: var(--font-size-2xl);
+            color: var(--gray-900);
+            margin-bottom: var(--space-6);
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .btn {
+            padding: var(--space-2) var(--space-4);
+            border: none;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            transition: all var(--transition-fast);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: #4a90e2;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--gray-600);
+            color: var(--white);
+        }
+
+        .btn-secondary:hover {
+            background: #4a5568;
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: var(--white);
+        }
+
+        .btn-success:hover {
+            background: #2d8a4e;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: var(--white);
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .alert {
+            padding: var(--space-4);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-6);
+            font-size: var(--font-size-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            margin-top: var(--space-6);
+        }
+
+        .table th,
+        .table td {
+            padding: var(--space-4);
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .table th {
+            background: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: var(--font-size-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .table tr:hover {
+            background: var(--gray-50);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .animate-delay-1 { animation-delay: 0.1s; }
+        .animate-delay-2 { animation-delay: 0.2s; }
+        .animate-delay-3 { animation-delay: 0.3s; }
+        .animate-delay-4 { animation-delay: 0.4s; }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .teacher-container {
+                padding: var(--space-4);
+            }
+
+            .teacher-header {
+                padding: var(--space-4) var(--space-6);
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+                gap: var(--space-4);
+            }
+
+            .section {
+                padding: var(--space-6);
+                margin: var(--space-4);
+            }
+
+            .table {
+                font-size: var(--font-size-sm);
+            }
+
+            .table th,
+            .table td {
+                padding: var(--space-2) var(--space-3);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="dashboard-container">
+                {% for message in messages %}
+                    <div class="alert alert-success animate-fade-in">
+                        <span>✓</span>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="dashboard-container">
+        <!-- Welcome Section -->
+        <div class="teacher-welcome">
+            <h1 class="welcome-title">Teacher Portal 👨‍🏫</h1>
+            <p class="welcome-subtitle">Manage attendance, classes, and student records</p>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="teacher-actions">
+            <a href="/logout" class="action-btn">
+                <span class="action-icon">🚪</span>
+                <span class="action-text">Logout</span>
+            </a>
+            <a href="#" class="action-btn" onclick="showSection('attendance-portal')">
+                <span class="action-icon">📝</span>
+                <span class="action-text">Take Attendance</span>
+            </a>
+            <a href="#" class="action-btn" onclick="showSection('attendance-history')">
+                <span class="action-icon">📊</span>
+                <span class="action-text">View History</span>
+            </a>
+            <a href="#" class="action-btn" onclick="showSection('class-management')">
+                <span class="action-icon">🎓</span>
+                <span class="action-text">Manage Classes</span>
+            </a>
+            <a href="/learning_pods" class="action-btn">
+                <span class="action-icon">👥</span>
+                <span class="action-text">Learning Pods</span>
+            </a>
+        </div>
+
+        <!-- Teacher Cards -->
+        <div class="cards-grid">
+            <div class="teacher-card animate-fade-in animate-delay-1" onclick="showSection('attendance-portal')">
+                <span class="card-icon">📝</span>
+                <h3 class="card-title">Take Attendance</h3>
+                <p class="card-description">Start taking attendance using NFC cards for your classes with real-time tracking and automated record keeping.</p>
+            </div>
+            
+            <div class="teacher-card animate-fade-in animate-delay-2" onclick="showSection('attendance-history')">
+                <span class="card-icon">📊</span>
+                <h3 class="card-title">Attendance History</h3>
+                <p class="card-description">View comprehensive attendance records, generate reports, and download attendance data for analysis.</p>
+            </div>
+            
+            <div class="teacher-card animate-fade-in animate-delay-3" onclick="showSection('profile')">
+                <span class="card-icon">👤</span>
+                <h3 class="card-title">Profile</h3>
+                <p class="card-description">View and manage your teacher profile information, credentials, and account settings.</p>
+            </div>
+            
+            <div class="teacher-card animate-fade-in animate-delay-4" onclick="showSection('class-management')">
+                <span class="card-icon">🎓</span>
+                <h3 class="card-title">Class Management</h3>
+                <p class="card-description">Create and manage class Excel files with automated pin number generation for organized student management.</p>
+            </div>
+            
+            <div class="teacher-card animate-fade-in animate-delay-1" onclick="window.location.href='/learning_pods'">
+                <span class="card-icon">👥</span>
+                <h3 class="card-title">Learning Pods</h3>
+                <p class="card-description">Create AI-powered collaborative learning groups with personalized micro-curricula and peer challenges.</p>
+            </div>
+            
+            <div class="teacher-card animate-fade-in animate-delay-2" onclick="window.location.href='/create_contest'">
+                <span class="card-icon">🏆</span>
+                <h3 class="card-title">Exam Contests</h3>
+                <p class="card-description">Create exciting exam contests for your students with AI-generated questions and real-time leaderboards.</p>
+            </div>
+        </div>
+
+        <!-- Sections -->
+        <div id="class-management" class="section">
+            <div class="dashboard-card">
+                <h2 class="dashboard-title">Class Management</h2>
+                <p class="dashboard-subtitle">Create and manage class files with student pin numbers</p>
+                
+                <div class="form-section">
+                    <h3 class="form-section-title">Create Class Excel File</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="studyYear" class="form-label">Study Year</label>
+                            <input type="text" id="studyYear" placeholder="e.g., 2024" class="form-input" />
+                        </div>
+                        <div class="form-group">
+                            <label for="department" class="form-label">Department</label>
+                            <input type="text" id="department" placeholder="e.g., Computer Science" class="form-input" />
+                        </div>
+                        <div class="form-group">
+                            <label for="section" class="form-label">Section</label>
+                            <input type="text" id="section" placeholder="e.g., A, B, C" class="form-input" />
+                        </div>
+                        <div class="form-group">
+                            <label for="startPin" class="form-label">Starting Pin No</label>
+                            <input type="number" id="startPin" placeholder="e.g., 1" class="form-input" />
+                        </div>
+                        <div class="form-group">
+                            <label for="endPin" class="form-label">Ending Pin No</label>
+                            <input type="number" id="endPin" placeholder="e.g., 60" class="form-input" />
+                        </div>
+                        <div class="form-group">
+                            <label for="skipNumbers" class="form-label">Skip Numbers (Optional)</label>
+                            <input type="text" id="skipNumbers" placeholder="e.g., 5,10,15 or 5-10,15-20" class="form-input" />
+                            <small class="form-help">
+                                Enter numbers to skip separated by commas. Use ranges like 5-10 for multiple numbers.
+                            </small>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn-primary" onclick="createClassExcel()">
+                            <span class="btn-icon">📊</span>
+                            Create Class Excel File
+                        </button>
+                        <a href="/view_class_files" class="btn btn-outline">
+                            <span class="btn-icon">📁</span>
+                            View Class Files
+                        </a>
+                    </div>
+                    <div id="classCreationStatus" class="alert" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="attendance-portal" class="section active attendance-section">
+            <div class="dashboard-card">
+                <h2 class="dashboard-title">Take Attendance</h2>
+                <p class="dashboard-subtitle">Start taking attendance using NFC cards for your classes</p>
+                
+                <div class="form-section">
+                    <h3 class="form-section-title">Class Information</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="attendanceYear" class="form-label">Study Year</label>
+                            <input type="text" id="attendanceYear" placeholder="e.g., 2024" class="form-input" onchange="updateAvailablePeriods()" />
+                        </div>
+                        <div class="form-group">
+                            <label for="attendanceDepartment" class="form-label">Department</label>
+                            <input type="text" id="attendanceDepartment" placeholder="e.g., Computer Science" class="form-input" onchange="updateAvailablePeriods()" />
+                        </div>
+                        <div class="form-group">
+                            <label for="attendanceSection" class="form-label">Section</label>
+                            <input type="text" id="attendanceSection" placeholder="e.g., A, B, C" class="form-input" onchange="updateAvailablePeriods()" />
+                        </div>
+                    </div>
+            </div>
+            
+                <div class="card">
+                    <div class="card-header"><h3>Subject & Period</h3></div>
+                    <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="subjectInput" class="form-label">Subject Name</label>
+                            <input type="text" id="subjectInput" placeholder="Enter subject name (e.g., Mathematics)" class="form-input" />
+                        </div>
+                        <div class="form-group">
+                            <label for="periodSelect" class="form-label">Period</label>
+                            <select id="periodSelect" class="form-select">
+                                <option value="">Select Period</option>
+                                <option value="1">Period 1</option>
+                                <option value="2">Period 2</option>
+                                <option value="3">Period 3</option>
+                                <option value="4">Period 4</option>
+                                <option value="5">Period 5</option>
+                                <option value="6">Period 6</option>
+                                <option value="7">Period 7</option>
+                                <option value="8">Period 8</option>
+                                <option value="9">Period 9</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="numberOfPeriods" class="form-label">No. of Periods</label>
+                            <input type="number" id="numberOfPeriods" min="1" max="9" value="1" class="form-input" placeholder="No. of periods" title="Number of continuous periods">
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-primary" onclick="startAttendance()" id="startAttendanceBtn">
+                                <span class="btn-icon">📝</span>
+                                Start Attendance
+                            </button>
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-secondary" onclick="viewAttendance()" id="viewAttendanceBtn">
+                                <span class="btn-icon">📊</span>
+                                View Attendance
+                            </button>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            
+                <div id="attendanceControls" class="card" style="display: none;">
+                    <div class="card-header"><h3>Attendance Controls</h3></div>
+                    <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">NFC Reader Type</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="nfcType" value="mobile" checked>
+                                <span class="radio-label">📱 Built-in NFC Reader</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="nfcType" value="external">
+                                <span class="radio-label">🔌 External NFC Reader</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button class="btn btn-danger" onclick="stopAttendance()" id="stopAttendanceBtn">
+                            <span class="btn-icon">⏹️</span>
+                            Stop Attendance
+                        </button>
+                        <span id="attendanceStatus" class="status-text">
+                            Status: Ready to start
+                        </span>
+                    </div>
+                    </div>
+            </div>
+            
+                <div id="attendanceLog" class="card">
+                    <div class="card-header"><h3>Attendance Log</h3></div>
+                    <div class="card-body">
+                    <div id="attendanceList" class="attendance-list">
+                        <p class="empty-state">
+                            No attendance records yet. Start attendance to begin scanning NFC cards.
+                        </p>
+                    </div>
+                    </div>
+            </div>
+        </div>
+
+        <div id="attendance-history" class="section">
+            <div class="dashboard-card">
+                <h2 class="dashboard-title">Attendance History</h2>
+                <p class="dashboard-subtitle">View and download previous attendance records</p>
+                <div class="form-section">
+                    <div class="form-actions">
+                        <button class="btn btn-primary" onclick="window.location.href='/view_attendance_history'">
+                            <span class="btn-icon">📁</span>
+                            View All Attendance Files
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="profile" class="section">
+            <div class="dashboard-card">
+                <h2 class="dashboard-title">Teacher Profile</h2>
+                <p class="dashboard-subtitle">View and manage your teacher profile information</p>
+                
+                <div class="form-section">
+                    <h3 class="form-section-title">Profile Information</h3>
+                    <div class="profile-grid">
+                        <div class="profile-item">
+                            <span class="profile-label">Username</span>
+                            <span class="profile-value">{{ session.username }}</span>
+                        </div>
+                        <div class="profile-item">
+                            <span class="profile-label">Email</span>
+                            <span class="profile-value">{{ session.email }}</span>
+                        </div>
+                        <div class="profile-item">
+                            <span class="profile-label">Role</span>
+                            <span class="profile-value">Teacher</span>
+                        </div>
+                        <div class="profile-item">
+                            <span class="profile-label">Credits</span>
+                            <span class="profile-value">₹{{ user_credits or 0 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showSection(sectionId) {
+            // Hide all sections with smooth transition
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => {
+                section.style.opacity = '0';
+                section.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    section.classList.remove('active');
+                }, 150);
+            });
+            
+            // Show selected section with smooth transition
+            setTimeout(() => {
+                const selectedSection = document.getElementById(sectionId);
+                if (selectedSection) {
+                    selectedSection.classList.add('active');
+                    selectedSection.style.opacity = '1';
+                    selectedSection.style.transform = 'translateY(0)';
+                }
+            }, 150);
+        }
+
+        // Attendance functionality (same as admin dashboard)
+        let attendanceActive = false;
+        let attendanceData = [];
+        let currentSession = null;
+
+        function startAttendance() {
+            const subjectField = document.getElementById('subjectInput');
+            const periodField = document.getElementById('periodSelect');
+            const numberOfPeriodsField = document.getElementById('numberOfPeriods');
+            const yearField = document.getElementById('attendanceYear');
+            const departmentField = document.getElementById('attendanceDepartment');
+            const sectionField = document.getElementById('attendanceSection');
+            
+            const subjectName = (subjectField ? subjectField.value : '').trim();
+            const period = (periodField ? periodField.value : '').trim();
+            const numberOfPeriods = parseInt(numberOfPeriodsField ? numberOfPeriodsField.value : 1);
+            const year = (yearField ? yearField.value : '').trim();
+            const department = (departmentField ? departmentField.value : '').trim();
+            const section = (sectionField ? sectionField.value : '').trim();
+            
+            // Validation
+            if (!year) {
+                alert('Please enter study year');
+                return;
+            }
+            
+            if (numberOfPeriods < 1 || numberOfPeriods > 9) {
+                alert('Number of periods must be between 1 and 9');
+                return;
+            }
+            
+            if (!department) {
+                alert('Please enter department name');
+                return;
+            }
+            
+            if (!section) {
+                alert('Please enter section');
+                return;
+            }
+            
+            if (!subjectName) {
+                alert('Please enter a subject name');
+                return;
+            }
+            
+            if (!period) {
+                alert('Please select a period');
+                return;
+            }
+
+            attendanceActive = true;
+            currentSession = {
+                year: year,
+                department: department,
+                section: section,
+                subject: subjectName,
+                period: period,
+                numberOfPeriods: numberOfPeriods,
+                startTime: new Date(),
+                presentStudents: new Set() // Use Set to avoid duplicates
+            };
+
+            document.getElementById('attendanceControls').style.display = 'block';
+            document.getElementById('attendanceStatus').textContent = `Status: Active - ${year} ${department} ${section} - ${subjectName} (Period ${period}) - Scanning for NFC cards...`;
+            document.getElementById('attendanceStatus').style.color = 'var(--success)';
+            
+            // Start NFC scanning
+            startNFCScanning();
+        }
+
+        function stopAttendance() {
+            attendanceActive = false;
+            document.getElementById('attendanceStatus').textContent = 'Status: Stopped - Saving data...';
+            document.getElementById('attendanceStatus').style.color = 'var(--danger)';
+            
+            // Save attendance data automatically
+            if (currentSession && currentSession.presentStudents.size > 0) {
+                saveAttendanceData();
+            } else {
+                // No data to save, just update status
+                document.getElementById('attendanceStatus').textContent = 'Status: Stopped - No data to save';
+            }
+        }
+
+        function startNFCScanning() {
+            const nfcType = document.querySelector('input[name="nfcType"]:checked').value;
+            
+            if (nfcType === 'mobile') {
+                // For mobile NFC, we'll use the Web NFC API
+                if ('NDEFReader' in window) {
+                    startMobileNFCScanning();
+                } else {
+                    alert('NFC is not supported on this device. Please use external NFC reader.');
+                }
+            } else {
+                // For external NFC reader, we'll use the existing read_nfc_card function
+                startExternalNFCScanning();
+            }
+        }
+
+        async function startMobileNFCScanning() {
+            try {
+                const ndef = new NDEFReader();
+                await ndef.scan();
+                
+                ndef.addEventListener('reading', async event => {
+                    if (!attendanceActive) return;
+                    
+                    const decoder = new TextDecoder();
+                    const nfcData = decoder.decode(event.message.records[0].data);
+                    try {
+                        const resp = await fetch('/validate_nfc_payload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nfc_data: nfcData }) });
+                        const result = await resp.json();
+                        if (result.success && result.nfc_data) {
+                            const studentData = JSON.parse(result.nfc_data);
+                            recordAttendance(studentData);
+                        } else {
+                            showMessage(result.message || 'Invalid card', 'danger');
+                        }
+                    } catch (e) {
+                        console.error('Validation failed:', e);
+                    }
+                });
+                
+            } catch (error) {
+                console.error('NFC scanning failed:', error);
+                alert('Failed to start NFC scanning. Please check your device settings.');
+            }
+        }
+
+        function startExternalNFCScanning() {
+            // Poll for external NFC card reads
+            const pollInterval = setInterval(() => {
+                if (!attendanceActive) {
+                    clearInterval(pollInterval);
+                    return;
+                }
+                
+                // This would call the backend to read external NFC
+                fetch('/read_external_nfc')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.nfc_data) {
+                            try {
+                                const studentData = JSON.parse(data.nfc_data);
+                                recordAttendance(studentData);
+                            } catch (e) {
+                                console.error('Invalid NFC data:', e);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        // Silently handle errors to avoid spam
+                    });
+            }, 1000); // Poll every second
+        }
+
+        function getPeriodInfo() {
+            if (!currentSession) return 'attendance';
+            
+            const startPeriod = currentSession.period;
+            const numberOfPeriods = currentSession.numberOfPeriods || 1;
+            const subject = currentSession.subject || 'subject';
+            
+            if (numberOfPeriods === 1) {
+                return `Period ${startPeriod} (${subject})`;
+            } else {
+                const endPeriod = parseInt(startPeriod) + numberOfPeriods - 1;
+                return `Periods ${startPeriod}-${endPeriod} (${subject})`;
+            }
+        }
+
+        function recordAttendance(studentData) {
+            if (!attendanceActive || !currentSession) return;
+            
+            // Normalize roll number from tag
+            const rollNumber = studentData.roll_no || studentData.roll;
+            if (!rollNumber) {
+                showMessage('Invalid card: missing roll number', 'danger');
+                return;
+            }
+            if (studentData.status && studentData.status !== 'active') {
+                showMessage('Card is inactive. Attendance not recorded.', 'danger');
+                return;
+            }
+            
+            // Check if student already marked present
+            if (currentSession.presentStudents.has(rollNumber)) {
+                const periodInfo = getPeriodInfo();
+                showMessage(`Student ${rollNumber} is already marked present for ${periodInfo}`, 'warning');
+                return;
+            }
+            
+            // Add to present students set
+            currentSession.presentStudents.add(rollNumber);
+            updateAttendanceList();
+            const periodInfo = getPeriodInfo();
+            showMessage(`Student ${rollNumber} marked present for ${periodInfo}`, 'success');
+        }
+
+        function updateAttendanceList() {
+            const attendanceList = document.getElementById('attendanceList');
+            
+            if (currentSession && currentSession.presentStudents.size > 0) {
+                let html = '<table class="table" style="margin: 0; overflow-x:auto; display:block;"><thead style="display: table; width: 100%; table-layout: fixed;"><tr><th style="width:70%">Pin Number</th><th style="width:30%">Status</th></tr></thead><tbody style="display:block; max-height: 300px; overflow:auto;">';
+                
+                // Convert Set to Array and sort
+                const presentPins = Array.from(currentSession.presentStudents).sort();
+                
+                presentPins.forEach(pinNumber => {
+                    html += `<tr>
+                        <td>${pinNumber}</td>
+                        <td><span style="color: var(--success); font-weight: 600;">✓ Present</span></td>
+                    </tr>`;
+                });
+                
+                html += '</tbody></table>';
+                html += `<p style="margin-top: var(--space-4); color: var(--gray-600); text-align: center;">
+                    Total Present: ${currentSession.presentStudents.size} students
+                </p>`;
+                attendanceList.innerHTML = html;
+            } else {
+                attendanceList.innerHTML = '<p style="color: var(--gray-500); text-align: center; padding: var(--space-8);">No attendance records yet. Start attendance to begin scanning NFC cards.</p>';
+            }
+        }
+
+        function saveAttendanceData() {
+            if (!currentSession) return;
+            
+            // Convert Set to Array for JSON serialization
+            const sessionData = {
+                ...currentSession,
+                presentStudents: Array.from(currentSession.presentStudents)
+            };
+            
+            fetch('/save_attendance', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    session: sessionData
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('attendanceStatus').textContent = 'Status: Stopped - Data saved successfully';
+                    document.getElementById('attendanceStatus').style.color = 'var(--success)';
+                    showMessage('Attendance data saved successfully', 'success');
+                    
+                    // Remove completed periods from dropdown
+                    removeCompletedPeriods();
+                    
+                    // Clear attendance log and controls after successful save
+                    setTimeout(() => {
+                        clearAttendanceSession();
+                    }, 2000); // Wait 2 seconds to show success message
+                } else {
+                    document.getElementById('attendanceStatus').textContent = 'Status: Stopped - Save failed';
+                    showMessage('Failed to save attendance data', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error saving attendance:', error);
+                document.getElementById('attendanceStatus').textContent = 'Status: Stopped - Save failed';
+                showMessage('Error saving attendance data', 'error');
+            });
+        }
+
+        function updateAvailablePeriods() {
+            const yearField = document.getElementById('attendanceYear');
+            const departmentField = document.getElementById('attendanceDepartment');
+            const sectionField = document.getElementById('attendanceSection');
+            
+            const year = (yearField ? yearField.value : '').trim();
+            const department = (departmentField ? departmentField.value : '').trim();
+            const section = (sectionField ? sectionField.value : '').trim();
+            
+            // Only fetch if all fields are filled
+            if (!year || !department || !section) {
+                return;
+            }
+            
+            // Show loading state
+            const periodSelect = document.getElementById('periodSelect');
+            periodSelect.innerHTML = '<option value="">Loading available periods...</option>';
+            
+            // Fetch available periods from backend
+            fetch('/get_available_periods', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    year: year,
+                    department: department,
+                    section: section
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update period dropdown with available periods
+                    periodSelect.innerHTML = '<option value="">Select Period</option>';
+                    
+                    if (data.available_periods.length === 0) {
+                        periodSelect.innerHTML = '<option value="">All periods completed today!</option>';
+                        showMessage('All periods have been completed for today!', 'info');
+                    } else {
+                        data.available_periods.forEach(period => {
+                            const option = document.createElement('option');
+                            option.value = period;
+                            option.textContent = `Period ${period}`;
+                            periodSelect.appendChild(option);
+                        });
+                        
+                        if (data.taken_periods && data.taken_periods.length > 0) {
+                            showMessage(`Periods ${data.taken_periods.join(', ')} already completed. Available: ${data.available_periods.join(', ')}`, 'info');
+                        }
+                    }
+                } else {
+                    // Fallback to all periods
+                    periodSelect.innerHTML = '<option value="">Select Period</option>';
+                    for (let i = 1; i <= 9; i++) {
+                        const option = document.createElement('option');
+                        option.value = i;
+                        option.textContent = `Period ${i}`;
+                        periodSelect.appendChild(option);
+                    }
+                    showMessage('Could not load available periods, showing all periods', 'warning');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching available periods:', error);
+                // Fallback to all periods
+                periodSelect.innerHTML = '<option value="">Select Period</option>';
+                for (let i = 1; i <= 9; i++) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = `Period ${i}`;
+                    periodSelect.appendChild(option);
+                }
+                showMessage('Error loading available periods, showing all periods', 'error');
+            });
+        }
+
+        function removeCompletedPeriods() {
+            if (!currentSession) return;
+            
+            // Refresh available periods from the Excel file
+            updateAvailablePeriods();
+        }
+
+        function clearAttendanceSession() {
+            // Hide attendance controls
+            document.getElementById('attendanceControls').style.display = 'none';
+            
+            // Reset status
+            document.getElementById('attendanceStatus').textContent = 'Status: Ready to start';
+            document.getElementById('attendanceStatus').style.color = 'var(--gray-600)';
+            
+            // Clear all fields
+            const subjectField = document.getElementById('subjectInput');
+            const periodField = document.getElementById('periodSelect');
+            const numberOfPeriodsField = document.getElementById('numberOfPeriods');
+            const yearField = document.getElementById('attendanceYear');
+            const departmentField = document.getElementById('attendanceDepartment');
+            const sectionField = document.getElementById('attendanceSection');
+            
+            if (subjectField) subjectField.value = '';
+            if (periodField) periodField.value = '';
+            if (numberOfPeriodsField) numberOfPeriodsField.value = '1';
+            if (yearField) yearField.value = '';
+            if (departmentField) departmentField.value = '';
+            if (sectionField) sectionField.value = '';
+
+            // Clear attendance log
+            document.getElementById('attendanceList').innerHTML = '<p style="color: var(--gray-500); text-align: center; padding: var(--space-8);">No attendance records yet. Start attendance to begin scanning NFC cards.</p>';
+            
+            // Reset session data
+            currentSession = null;
+            attendanceActive = false;
+        }
+
+        function viewAttendance() {
+            // Redirect to attendance files list page
+            window.location.href = '/attendance_files';
+        }
+
+        function downloadAttendance() {
+            if (!currentSession || currentSession.presentStudents.size === 0) {
+                alert('No attendance data to download');
+                return;
+            }
+            
+            // Convert Set to Array for JSON serialization
+            const sessionData = {
+                ...currentSession,
+                presentStudents: Array.from(currentSession.presentStudents)
+            };
+            
+            fetch('/download_attendance', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    session: sessionData
+                })
+            })
+            .then(async response => {
+                if (!response.ok) {
+                    // Try to read JSON error
+                    try {
+                        const err = await response.json();
+                        throw new Error(err.message || 'Failed to generate file');
+                    } catch (_) {
+                        throw new Error('Failed to generate file');
+                    }
+                }
+                const contentType = response.headers.get('Content-Type') || '';
+                if (!contentType.includes('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')) {
+                    // Not an XLSX, attempt to parse error
+                    try {
+                        const err = await response.json();
+                        throw new Error(err.message || 'Unexpected response type');
+                    } catch (_) {
+                        throw new Error('Unexpected response type');
+                    }
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `attendance_${currentSession.subject}_Period${currentSession.period}_${new Date().toISOString().split('T')[0]}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            })
+            .catch(error => {
+                console.error('Error downloading attendance:', error);
+                alert(`Error downloading attendance: ${error.message}`);
+            });
+        }
+
+        function createClassExcel() {
+            const studyYear = document.getElementById('studyYear').value.trim();
+            const department = document.getElementById('department').value.trim();
+            const section = document.getElementById('section').value.trim();
+            const startPin = parseInt(document.getElementById('startPin').value);
+            const endPin = parseInt(document.getElementById('endPin').value);
+            const skipNumbers = document.getElementById('skipNumbers').value.trim();
+            
+            // Validation
+            if (!studyYear || !department || !section || !startPin || !endPin) {
+                showClassMessage('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            if (startPin >= endPin) {
+                showClassMessage('Starting pin number must be less than ending pin number', 'error');
+                return;
+            }
+            
+            if (endPin - startPin > 200) {
+                showClassMessage('Pin number range cannot exceed 200 students', 'error');
+                return;
+            }
+            
+            // Show loading status
+            showClassMessage('Creating class Excel file...', 'info');
+            
+            // Send request to backend
+            fetch('/create_class_excel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    studyYear: studyYear,
+                    department: department,
+                    section: section,
+                    startPin: startPin,
+                    endPin: endPin,
+                    skipNumbers: skipNumbers
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showClassMessage(`Class Excel file created successfully: ${data.filename}`, 'success');
+                    // Clear form
+                    document.getElementById('studyYear').value = '';
+                    document.getElementById('department').value = '';
+                    document.getElementById('section').value = '';
+                    document.getElementById('startPin').value = '';
+                    document.getElementById('endPin').value = '';
+                    document.getElementById('skipNumbers').value = '';
+                } else {
+                    showClassMessage(data.message || 'Error creating class Excel file', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error creating class Excel:', error);
+                showClassMessage('Error creating class Excel file', 'error');
+            });
+        }
+        
+        function showClassMessage(message, type) {
+            const statusDiv = document.getElementById('classCreationStatus');
+            statusDiv.textContent = message;
+            statusDiv.style.display = 'block';
+            
+            // Set color based on type
+            if (type === 'success') {
+                statusDiv.style.backgroundColor = '#d4edda';
+                statusDiv.style.color = '#155724';
+                statusDiv.style.border = '1px solid #c3e6cb';
+            } else if (type === 'error') {
+                statusDiv.style.backgroundColor = '#f8d7da';
+                statusDiv.style.color = '#721c24';
+                statusDiv.style.border = '1px solid #f5c6cb';
+            } else if (type === 'info') {
+                statusDiv.style.backgroundColor = '#d1ecf1';
+                statusDiv.style.color = '#0c5460';
+                statusDiv.style.border = '1px solid #bee5eb';
+            }
+            
+            // Hide after 5 seconds for success/info, 10 seconds for error
+            const hideDelay = type === 'error' ? 10000 : 5000;
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, hideDelay);
+        }
+
+        function showMessage(message, type) {
+            // Create a temporary message element
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `alert alert-${type === 'success' ? 'success' : type === 'warning' ? 'info' : 'error'}`;
+            messageDiv.textContent = message;
+            messageDiv.style.position = 'fixed';
+            messageDiv.style.top = '20px';
+            messageDiv.style.right = '20px';
+            messageDiv.style.zIndex = '9999';
+            messageDiv.style.minWidth = '300px';
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                document.body.removeChild(messageDiv);
+            }, 3000);
+        }
+
+        // Enhanced interaction functions
+        function enhanceInteractions() {
+            // Add ripple effect to buttons
+            document.querySelectorAll('.btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    const ripple = document.createElement('span');
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.width = ripple.style.height = size + 'px';
+                    ripple.style.left = x + 'px';
+                    ripple.style.top = y + 'px';
+                    ripple.classList.add('ripple');
+                    
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+
+            // Add loading states to forms
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function() {
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.classList.add('loading');
+                        submitBtn.disabled = true;
+                    }
+                });
+            });
+
+            // Add smooth scrolling
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        }
+
+        // Keyboard shortcuts
+        function addKeyboardShortcuts() {
+            document.addEventListener('keydown', function(e) {
+                // Ctrl/Cmd + 1-4 for quick navigation
+                if ((e.ctrlKey || e.metaKey) && e.key >= '1' && e.key <= '4') {
+                    e.preventDefault();
+                    const sections = ['class-management', 'attendance-portal', 'attendance-history', 'profile'];
+                    const sectionIndex = parseInt(e.key) - 1;
+                    if (sections[sectionIndex]) {
+                        showSection(sections[sectionIndex]);
+                    }
+                }
+                
+                // Escape to close modals or go back
+                if (e.key === 'Escape') {
+                    const activeSection = document.querySelector('.section.active');
+                    if (activeSection && activeSection.id !== 'attendance-portal') {
+                        showSection('attendance-portal');
+                    }
+                }
+            });
+        }
+
+        // Touch gesture support for mobile
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        document.addEventListener('touchstart', function(e) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchend', function(e) {
+            if (!touchStartX || !touchStartY) return;
+            
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            
+            const diffX = touchStartX - touchEndX;
+            const diffY = touchStartY - touchEndY;
+            
+            // Swipe left/right for navigation
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+                const sections = ['class-management', 'attendance-portal', 'attendance-history', 'profile'];
+                const currentSection = document.querySelector('.section.active');
+                if (currentSection) {
+                    const currentIndex = sections.indexOf(currentSection.id);
+                    if (currentIndex !== -1) {
+                        if (diffX > 0 && currentIndex < sections.length - 1) {
+                            // Swipe left - next section
+                            showSection(sections[currentIndex + 1]);
+                        } else if (diffX < 0 && currentIndex > 0) {
+                            // Swipe right - previous section
+                            showSection(sections[currentIndex - 1]);
+                        }
+                    }
+                }
+            }
+            
+            touchStartX = 0;
+            touchStartY = 0;
+        });
+
+        // Initialize enhanced interactions
+        document.addEventListener('DOMContentLoaded', function() {
+            enhanceInteractions();
+            addKeyboardShortcuts();
+        });
+    </script>
+</body>
+</html>

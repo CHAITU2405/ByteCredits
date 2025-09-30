@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Custom Exam - Byte Credits</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .exam-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: var(--space-6);
+        }
+        
+        .exam-form {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .form-group {
+            margin-bottom: var(--space-4);
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: var(--font-semibold);
+            margin-bottom: var(--space-2);
+            color: var(--gray-700);
+        }
+        
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: var(--space-3);
+            border: 2px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            font-size: var(--text-base);
+            transition: var(--transition);
+        }
+        
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px var(--primary-100);
+        }
+        
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .btn-generate {
+            background: var(--primary-500);
+            color: var(--white);
+            padding: var(--space-4) var(--space-8);
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: var(--text-lg);
+            font-weight: var(--font-semibold);
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+        }
+        
+        .btn-generate:hover {
+            background: var(--primary-600);
+            transform: translateY(-1px);
+        }
+        
+        .btn-generate:disabled {
+            background: var(--gray-400);
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .info-section {
+            background: var(--blue-50);
+            border: 1px solid var(--blue-200);
+            border-radius: var(--radius-md);
+            padding: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+        
+        .info-section h3 {
+            color: var(--blue-700);
+            margin-bottom: var(--space-2);
+        }
+        
+        .info-section p {
+            color: var(--blue-600);
+            margin: 0;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-4);
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: var(--space-4);
+        }
+        
+        .spinner {
+            border: 3px solid var(--gray-300);
+            border-top: 3px solid var(--primary-500);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto var(--space-2);
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="exam-container">
+        <div class="page-header">
+            <h1>🎯 Create Custom Exam</h1>
+            <p>Generate a mock exam using AI with your custom specifications</p>
+        </div>
+        
+        <div class="info-section">
+            <h3>ℹ️ How It Works</h3>
+            <p>Fill in the form below with your exam specifications. Our AI will generate a complete mock exam based on your syllabus content and requirements.</p>
+        </div>
+        
+        <form method="POST" class="exam-form" id="examForm">
+            <div class="form-group">
+                <label class="form-label" for="subject_name">Subject Name *</label>
+                <input type="text" id="subject_name" name="subject_name" class="form-input" 
+                       placeholder="e.g., Web Technologies, Mathematics, Physics" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="syllabus_content">Syllabus Content *</label>
+                <textarea id="syllabus_content" name="syllabus_content" class="form-textarea" 
+                          placeholder="Enter the detailed syllabus content here. Be specific about topics, concepts, and areas to be covered..." required></textarea>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="question_format">Question Format</label>
+                    <select id="question_format" name="question_format" class="form-select">
+                        <option value="mixed" selected>Mixed (MCQ + Short Answer + Descriptive)</option>
+                        <option value="multiple_choice">Multiple Choice Only</option>
+                        <option value="short_answer">Short Answer Only</option>
+                        <option value="descriptive">Descriptive Only</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="difficulty_level">Difficulty Level</label>
+                    <select id="difficulty_level" name="difficulty_level" class="form-select">
+                        <option value="easy">Easy</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="hard">Hard</option>
+                        <option value="mixed">Mixed</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="number_of_questions">Number of Questions</label>
+                    <input type="number" id="number_of_questions" name="number_of_questions" class="form-input" 
+                           value="10" min="5" max="50" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="total_marks">Total Marks</label>
+                    <input type="number" id="total_marks" name="total_marks" class="form-input" 
+                           value="50" min="10" max="200" required>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="time_limit">Time Limit (minutes)</label>
+                    <input type="number" id="time_limit" name="time_limit" class="form-input" 
+                           value="60" min="15" max="300" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="question_paper_format">Question Paper Format/Structure</label>
+                <textarea id="question_paper_format" name="question_paper_format" class="form-textarea" 
+                          placeholder="Describe your preferred question paper structure. For example:&#10;Section A: 5 Multiple Choice Questions (2 marks each)&#10;Section B: 3 Short Answer Questions (5 marks each)&#10;Section C: 2 Descriptive Questions (10 marks each)"></textarea>
+            </div>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Generating your exam with AI... This may take a few moments.</p>
+            </div>
+            
+            <button type="submit" class="btn-generate" id="generateBtn">
+                🚀 Generate Exam with AI
+            </button>
+        </form>
+        
+        <div class="info-section">
+            <h3>📋 What Happens Next</h3>
+            <p>After clicking "Generate Exam", our AI will create a complete mock exam based on your specifications. You'll be redirected to take the exam immediately after generation.</p>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('examForm').addEventListener('submit', function(e) {
+            const loading = document.getElementById('loading');
+            const generateBtn = document.getElementById('generateBtn');
+            
+            // Show loading state
+            loading.style.display = 'block';
+            generateBtn.disabled = true;
+            generateBtn.textContent = 'Generating...';
+            
+            // Hide loading after 30 seconds (fallback)
+            setTimeout(() => {
+                loading.style.display = 'none';
+                generateBtn.disabled = false;
+                generateBtn.textContent = '🚀 Generate Exam with AI';
+            }, 30000);
+        });
+        
+        // Auto-save form data to localStorage
+        function saveFormData() {
+            const formData = {
+                subject_name: document.getElementById('subject_name').value,
+                syllabus_content: document.getElementById('syllabus_content').value,
+                question_format: document.getElementById('question_format').value,
+                difficulty_level: document.getElementById('difficulty_level').value,
+                number_of_questions: document.getElementById('number_of_questions').value,
+                total_marks: document.getElementById('total_marks').value,
+                time_limit: document.getElementById('time_limit').value,
+                question_paper_format: document.getElementById('question_paper_format').value
+            };
+            localStorage.setItem('customExamForm', JSON.stringify(formData));
+        }
+        
+        // Load form data from localStorage
+        function loadFormData() {
+            const savedData = localStorage.getItem('customExamForm');
+            if (savedData) {
+                const formData = JSON.parse(savedData);
+                document.getElementById('subject_name').value = formData.subject_name || '';
+                document.getElementById('syllabus_content').value = formData.syllabus_content || '';
+                document.getElementById('question_format').value = formData.question_format || 'mixed';
+                document.getElementById('difficulty_level').value = formData.difficulty_level || 'medium';
+                document.getElementById('number_of_questions').value = formData.number_of_questions || '10';
+                document.getElementById('total_marks').value = formData.total_marks || '50';
+                document.getElementById('time_limit').value = formData.time_limit || '60';
+                document.getElementById('question_paper_format').value = formData.question_paper_format || '';
+            }
+        }
+        
+        // Save data on input change
+        document.querySelectorAll('input, textarea, select').forEach(element => {
+            element.addEventListener('input', saveFormData);
+            element.addEventListener('change', saveFormData);
+        });
+        
+        // Load data on page load
+        loadFormData();
+    </script>
+</body>
+</html>

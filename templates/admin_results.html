@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - Result Declarations</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='ICON.png') }}">
+</head>
+<body>
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div class="dashboard-container">
+        {% for message in messages %}
+          <div class="alert alert-success"><span>✓</span> {{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="dashboard-container">
+    <h1 class="section-title" style="text-align:center; margin-top:16px;">Result Declarations</h1>
+
+    <div class="section active" style="max-width:900px; margin:auto;">
+      <h2 class="section-title">Upload Results PDF</h2>
+      <form method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+          <label class="form-label" for="title">Title</label>
+          <input class="form-input" type="text" id="title" name="title" placeholder="e.g., April 2025 Results">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="pdf">PDF File</label>
+          <input class="form-input" type="file" id="pdf" name="pdf" accept="application/pdf" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="rolls_text">Manual Roll Numbers (optional)</label>
+          <textarea class="form-textarea" id="rolls_text" name="rolls_text" placeholder="Paste roll numbers separated by spaces/newlines, e.g.\n22CS1234\n22CS1235\n22CS1236"></textarea>
+          <small style="color: var(--gray-500);">Used if extraction fails; merged with auto-extracted rolls.</small>
+        </div>
+        <button class="btn btn-primary" type="submit">Upload & Extract</button>
+        <a class="btn btn-secondary" href="/admin">Back to Admin</a>
+      </form>
+    </div>
+
+    <div class="section active" style="max-width:1000px; margin:24px auto;">
+      <h2 class="section-title">Past Declarations</h2>
+      {% if results and results|length > 0 %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Uploaded At</th>
+            <th>Title</th>
+            <th>Uploader</th>
+            <th>Extracted Rolls</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in results %}
+          <tr>
+            <td>{{ r.uploaded_at.strftime('%Y-%m-%d %H:%M') if r.uploaded_at else '-' }}</td>
+            <td>{{ r.title }}</td>
+            <td>{{ r.uploaded_by or '-' }}</td>
+            <td>{{ (r.passed_rolls and (r.passed_rolls|length)) or 0 }}</td>
+            <td>
+              <a class="btn btn-view" href="{{ url_for('download_result_pdf', result_id=r.id) }}">Download PDF</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="text-center">No result declarations found.</p>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>
+
+

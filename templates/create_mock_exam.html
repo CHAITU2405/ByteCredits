@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Mock Exam - ByteCredits</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Create Exam Specific Styles */
+        .create-exam-welcome {
+            text-align: center;
+            margin-bottom: var(--space-8);
+            padding: var(--space-8) 0;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border-radius: var(--radius-lg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .create-exam-welcome::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .create-exam-welcome .welcome-title {
+            font-size: var(--text-4xl);
+            font-weight: var(--font-bold);
+            margin-bottom: var(--space-2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .create-exam-welcome .welcome-subtitle {
+            font-size: var(--text-lg);
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .exam-form-container {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: var(--space-8);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--gray-200);
+            margin-bottom: var(--space-8);
+        }
+
+        .form-section {
+            margin-bottom: var(--space-8);
+        }
+
+        .form-section-title {
+            font-size: var(--text-xl);
+            font-weight: var(--font-semibold);
+            color: var(--gray-900);
+            margin-bottom: var(--space-4);
+            padding-bottom: var(--space-2);
+            border-bottom: 2px solid var(--primary-light);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-6);
+        }
+
+        .form-group-full {
+            grid-column: 1 / -1;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: var(--space-2);
+            font-weight: var(--font-semibold);
+            color: var(--gray-700);
+            font-size: var(--text-sm);
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: var(--space-3);
+            border: 2px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            font-size: var(--text-base);
+            transition: all var(--transition-fast);
+            background: var(--white);
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .form-help {
+            color: var(--gray-500);
+            font-size: var(--text-sm);
+            margin-top: var(--space-1);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: var(--space-4);
+            justify-content: center;
+            margin-top: var(--space-8);
+        }
+
+        .btn {
+            padding: var(--space-3) var(--space-6);
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: var(--text-base);
+            font-weight: var(--font-semibold);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            min-height: 48px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: var(--white);
+            transform: translateY(-2px);
+        }
+
+        .btn-icon {
+            font-size: var(--text-lg);
+        }
+
+        .loading {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .loading .btn-icon {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .info-card {
+            background: var(--info-light);
+            border: 1px solid var(--info);
+            border-radius: var(--radius-md);
+            padding: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+
+        .info-card .info-title {
+            font-weight: var(--font-semibold);
+            color: var(--info-dark);
+            margin-bottom: var(--space-2);
+        }
+
+        .info-card .info-text {
+            color: var(--info-dark);
+            font-size: var(--text-sm);
+            line-height: var(--line-height-relaxed);
+        }
+
+        .distribution-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-3);
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-2);
+        }
+
+        .distribution-info {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1);
+        }
+
+        .distribution-type {
+            font-weight: var(--font-semibold);
+            color: var(--gray-700);
+            font-size: var(--text-sm);
+        }
+
+        .distribution-count {
+            color: var(--gray-500);
+            font-size: var(--text-xs);
+        }
+
+        .distribution-marks {
+            font-weight: var(--font-bold);
+            color: var(--primary);
+            font-size: var(--text-sm);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: var(--space-4);
+            }
+
+            .form-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
+            }
+
+            .exam-form-container {
+                padding: var(--space-6);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="dashboard-container">
+                {% for message in messages %}
+                    <div class="alert alert-success animate-fade-in">
+                        <span>✓</span>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="dashboard-container">
+        <!-- Welcome Section -->
+        <div class="create-exam-welcome">
+            <h1 class="welcome-title">Create Mock Exam 📝</h1>
+            <p class="welcome-subtitle">Generate personalized questions using AI based on your syllabus</p>
+        </div>
+
+        <!-- Info Card -->
+        <div class="info-card">
+            <div class="info-title">💡 How it works</div>
+            <div class="info-text">
+                Enter your subject name and syllabus content. Our AI will analyze the syllabus and generate relevant questions in your preferred format. You can choose from multiple choice, descriptive, or mixed question types.
+            </div>
+        </div>
+
+        <!-- Exam Creation Form -->
+        <div class="exam-form-container">
+            <form method="POST" action="/create_mock_exam" id="examForm">
+                <!-- Basic Information -->
+                <div class="form-section">
+                    <h2 class="form-section-title">Exam Details</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="subject_name" class="form-label">Subject Name *</label>
+                            <input type="text" id="subject_name" name="subject_name" class="form-input" 
+                                   placeholder="e.g., Mathematics, Physics, Computer Science" required>
+                            <div class="form-help">Enter the subject you want to create an exam for</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="question_format" class="form-label">Question Format *</label>
+                            <select id="question_format" name="question_format" class="form-select" required onchange="toggleFormatOptions()">
+                                <option value="">Select Format</option>
+                                <option value="multiple_choice">Multiple Choice</option>
+                                <option value="descriptive">Descriptive/Long Answer</option>
+                                <option value="mixed">Mixed (MCQ + Descriptive)</option>
+                                <option value="section_based">Section-Based (Custom Format)</option>
+                            </select>
+                            <div class="form-help">Choose the type of questions you want</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Syllabus -->
+                <div class="form-section">
+                    <h2 class="form-section-title">Syllabus Content</h2>
+                    <div class="form-group form-group-full">
+                        <label for="syllabus" class="form-label">Syllabus/Topics *</label>
+                        <textarea id="syllabus" name="syllabus" class="form-textarea" 
+                                  placeholder="Enter the syllabus content, topics, or chapters you want questions from. Be as detailed as possible for better question generation.
+
+Example:
+- Algebra: Linear equations, quadratic equations, polynomials
+- Geometry: Triangles, circles, coordinate geometry
+- Calculus: Limits, derivatives, integrals
+- Statistics: Mean, median, mode, probability" required></textarea>
+                        <div class="form-help">Provide detailed syllabus content. The more specific you are, the better the AI can generate relevant questions.</div>
+                    </div>
+                </div>
+
+                <!-- Question Paper Format -->
+                <div class="form-section">
+                    <h2 class="form-section-title">📋 Question Paper Format</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="total_questions" class="form-label">Total Questions</label>
+                            <input type="number" id="total_questions" name="total_questions" class="form-input" 
+                                   value="10" min="5" max="50" required onchange="updateFormatPreview()">
+                            <div class="form-help">Choose between 5-50 questions</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="total_marks" class="form-label">Total Marks</label>
+                            <input type="number" id="total_marks" name="total_marks" class="form-input" 
+                                   value="50" min="10" max="100" required onchange="updateFormatPreview()">
+                            <div class="form-help">Total marks for the exam</div>
+                        </div>
+                    </div>
+
+                    <!-- Format-specific distribution -->
+                    <div id="format_distribution" style="display: none;">
+                        <h3 style="margin: var(--space-4) 0 var(--space-2) 0; color: var(--gray-700);">Question Distribution</h3>
+                        <div id="distribution_content">
+                            <!-- Dynamic content based on format selection -->
+                        </div>
+                    </div>
+
+                    <!-- Section-based format input -->
+                    <div id="section_format_input" style="display: none;">
+                        <h3 style="margin: var(--space-4) 0 var(--space-2) 0; color: var(--gray-700);">📋 Define Question Paper Format</h3>
+                        
+                        <!-- Format Description -->
+                        <div class="form-group form-group-full">
+                            <label for="format_description" class="form-label">📝 Describe Your Question Paper Format</label>
+                            <textarea id="format_description" name="format_description" class="form-textarea" 
+                                      placeholder="Describe your desired question paper format in detail. For example:
+
+Section A: 3 multiple choice questions, 2 marks each
+Section B: 4 descriptive questions, 6 marks each  
+Section C: 2 essay questions, 10 marks each (with internal choice)
+
+Or:
+
+Part I: 5 short answer questions, 1 mark each
+Part II: 3 long answer questions, 5 marks each
+Part III: 2 application-based questions, 15 marks each
+
+Be as specific as possible about:
+- Section/Part names
+- Number of questions per section
+- Marks per question
+- Question types (MCQ, descriptive, short answer, essay)
+- Any internal choice requirements"></textarea>
+                            <div class="form-help">Provide a detailed description of how you want your question paper structured. This will help the AI generate questions exactly as you need them.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exam Settings -->
+                <div class="form-section">
+                    <h2 class="form-section-title">⏱️ Exam Settings</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="time_limit" class="form-label">Time Limit (minutes)</label>
+                            <input type="number" id="time_limit" name="time_limit" class="form-input" 
+                                   value="60" min="15" max="180" required>
+                            <div class="form-help">Recommended: 5-6 minutes per question</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="difficulty_level" class="form-label">Difficulty Level</label>
+                            <select id="difficulty_level" name="difficulty_level" class="form-select">
+                                <option value="easy">Easy</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="hard">Hard</option>
+                                <option value="mixed">Mixed</option>
+                            </select>
+                            <div class="form-help">Choose the difficulty level for questions</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <span class="btn-icon">🚀</span>
+                        Generate Exam
+                    </button>
+                    <a href="/mock_exam" class="btn btn-outline">
+                        <span class="btn-icon">↩️</span>
+                        Back to Exams
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Toggle format options
+        function toggleFormatOptions() {
+            const format = document.getElementById('question_format').value;
+            const formatDistribution = document.getElementById('format_distribution');
+            const sectionFormatInput = document.getElementById('section_format_input');
+            
+            if (format === 'section_based') {
+                formatDistribution.style.display = 'none';
+                sectionFormatInput.style.display = 'block';
+            } else {
+                formatDistribution.style.display = 'block';
+                sectionFormatInput.style.display = 'none';
+                updateFormatPreview();
+            }
+        }
+
+        // Format distribution management
+        function updateFormatPreview() {
+            const format = document.getElementById('question_format').value;
+            const totalQuestions = parseInt(document.getElementById('total_questions').value) || 10;
+            const totalMarks = parseInt(document.getElementById('total_marks').value) || 50;
+            
+            if (!format) {
+                document.getElementById('format_distribution').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('format_distribution').style.display = 'block';
+            const content = document.getElementById('distribution_content');
+            
+            let distributionHTML = '';
+            
+            if (format === 'multiple_choice') {
+                const marksPerQuestion = Math.round(totalMarks / totalQuestions);
+                distributionHTML = `
+                    <div class="distribution-item">
+                        <div class="distribution-info">
+                            <span class="distribution-type">Multiple Choice Questions</span>
+                            <span class="distribution-count">${totalQuestions} questions</span>
+                        </div>
+                        <div class="distribution-marks">${marksPerQuestion} marks each</div>
+                    </div>
+                `;
+            } else if (format === 'descriptive') {
+                const marksPerQuestion = Math.round(totalMarks / totalQuestions);
+                distributionHTML = `
+                    <div class="distribution-item">
+                        <div class="distribution-info">
+                            <span class="distribution-type">Descriptive Questions</span>
+                            <span class="distribution-count">${totalQuestions} questions</span>
+                        </div>
+                        <div class="distribution-marks">${marksPerQuestion} marks each</div>
+                    </div>
+                `;
+            } else if (format === 'mixed') {
+                const mcqCount = Math.ceil(totalQuestions * 0.6);
+                const descCount = totalQuestions - mcqCount;
+                const mcqMarks = Math.ceil(totalMarks * 0.4);
+                const descMarks = totalMarks - mcqMarks;
+                
+                distributionHTML = `
+                    <div class="distribution-item">
+                        <div class="distribution-info">
+                            <span class="distribution-type">Multiple Choice Questions</span>
+                            <span class="distribution-count">${mcqCount} questions</span>
+                        </div>
+                        <div class="distribution-marks">${Math.round(mcqMarks/mcqCount)} marks each</div>
+                    </div>
+                    <div class="distribution-item">
+                        <div class="distribution-info">
+                            <span class="distribution-type">Descriptive Questions</span>
+                            <span class="distribution-count">${descCount} questions</span>
+                        </div>
+                        <div class="distribution-marks">${Math.round(descMarks/descCount)} marks each</div>
+                    </div>
+                `;
+            }
+            
+            content.innerHTML = distributionHTML;
+        }
+
+        // Form validation and submission
+        document.getElementById('examForm').addEventListener('submit', function(e) {
+            const submitBtn = document.getElementById('submitBtn');
+            const subjectName = document.getElementById('subject_name').value.trim();
+            const syllabus = document.getElementById('syllabus').value.trim();
+            const questionFormat = document.getElementById('question_format').value;
+            const totalQuestions = document.getElementById('total_questions').value;
+            const totalMarks = document.getElementById('total_marks').value;
+            
+            // Basic validation
+            if (!subjectName || !syllabus || !questionFormat || !totalQuestions || !totalMarks) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+                return;
+            }
+            
+            if (syllabus.length < 50) {
+                e.preventDefault();
+                alert('Please provide more detailed syllabus content (at least 50 characters) for better question generation.');
+                return;
+            }
+            
+            // Validate marks distribution
+            if (parseInt(totalMarks) < parseInt(totalQuestions)) {
+                e.preventDefault();
+                alert('Total marks should be at least equal to the number of questions.');
+                return;
+            }
+            
+            // Validate section-based format
+            if (questionFormat === 'section_based') {
+                const formatDescription = document.getElementById('format_description').value.trim();
+                
+                if (!formatDescription) {
+                    e.preventDefault();
+                    alert('Please describe your question paper format in detail.');
+                    return;
+                }
+                
+                if (formatDescription.length < 50) {
+                    e.preventDefault();
+                    alert('Please provide a more detailed format description (at least 50 characters).');
+                    return;
+                }
+            }
+            
+            // Show loading state
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="btn-icon">⏳</span>Generating Questions...';
+        });
+
+        // Auto-save form data to localStorage
+        function saveFormData() {
+            const formData = {
+                subject_name: document.getElementById('subject_name').value,
+                syllabus: document.getElementById('syllabus').value,
+                question_format: document.getElementById('question_format').value,
+                total_questions: document.getElementById('total_questions').value,
+                time_limit: document.getElementById('time_limit').value
+            };
+            localStorage.setItem('examFormData', JSON.stringify(formData));
+        }
+
+        // Load saved form data
+        function loadFormData() {
+            const savedData = localStorage.getItem('examFormData');
+            if (savedData) {
+                const formData = JSON.parse(savedData);
+                document.getElementById('subject_name').value = formData.subject_name || '';
+                document.getElementById('syllabus').value = formData.syllabus || '';
+                document.getElementById('question_format').value = formData.question_format || '';
+                document.getElementById('total_questions').value = formData.total_questions || '10';
+                document.getElementById('time_limit').value = formData.time_limit || '60';
+            }
+        }
+
+        // Enhanced interaction functions
+        function enhanceInteractions() {
+            // Add ripple effect to buttons
+            document.querySelectorAll('.btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    const ripple = document.createElement('span');
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.width = ripple.style.height = size + 'px';
+                    ripple.style.left = x + 'px';
+                    ripple.style.top = y + 'px';
+                    ripple.classList.add('ripple');
+                    
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+
+            // Auto-save on input change
+            document.querySelectorAll('input, select, textarea').forEach(input => {
+                input.addEventListener('input', saveFormData);
+                input.addEventListener('change', saveFormData);
+            });
+
+            // Update format preview on format change
+            document.getElementById('question_format').addEventListener('change', updateFormatPreview);
+            document.getElementById('total_questions').addEventListener('input', updateFormatPreview);
+            document.getElementById('total_marks').addEventListener('input', updateFormatPreview);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            enhanceInteractions();
+            loadFormData();
+            
+            // Clear saved data on successful submission
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('success') === 'true') {
+                localStorage.removeItem('examFormData');
+            }
+        });
+    </script>
+</body>
+</html>

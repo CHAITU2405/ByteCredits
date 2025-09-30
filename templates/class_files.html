@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Files - ByteCredits</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--space-6);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: var(--space-8);
+        }
+        
+        .header h1 {
+            color: var(--gray-900);
+            margin-bottom: var(--space-2);
+        }
+        
+        .header p {
+            color: var(--gray-600);
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            color: var(--primary);
+            text-decoration: none;
+            margin-bottom: var(--space-6);
+            font-weight: 500;
+        }
+        
+        .back-link:hover {
+            color: var(--primary-dark);
+        }
+        
+        .files-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: var(--space-6);
+        }
+        
+        .file-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-sm);
+            transition: all var(--transition-normal);
+        }
+        
+        .file-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        
+        .file-icon {
+            font-size: 2rem;
+            margin-bottom: var(--space-4);
+        }
+        
+        .file-name {
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: var(--space-2);
+            word-break: break-word;
+        }
+        
+        .file-info {
+            color: var(--gray-600);
+            font-size: var(--font-size-sm);
+            margin-bottom: var(--space-4);
+        }
+        
+        .file-actions {
+            display: flex;
+            gap: var(--space-3);
+        }
+        
+        .btn {
+            padding: var(--space-2) var(--space-4);
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            transition: all var(--transition-fast);
+        }
+        
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: var(--white);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--gray-200);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: var(--space-12);
+            color: var(--gray-500);
+        }
+        
+        .empty-state h3 {
+            margin-bottom: var(--space-4);
+            color: var(--gray-700);
+        }
+        
+        .alert {
+            padding: var(--space-4);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-6);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+        
+        .alert-success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 Class Files</h1>
+            <p>Manage and download class Excel files</p>
+        </div>
+        
+        <a href="{% if user_role == 'teacher' %}/teacher_dashboard{% else %}/admin{% endif %}" class="back-link">
+            ← Back to Dashboard
+        </a>
+        
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-success">
+                        <span>✓</span>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        {% if class_files %}
+            <div class="files-grid">
+                {% for file in class_files %}
+                    <div class="file-card">
+                        <div class="file-icon">📊</div>
+                        <div class="file-name">{{ file.filename }}</div>
+                        <div class="file-info">
+                            <div>📅 Created: {{ file.created }}</div>
+                            <div>📦 Size: {{ "%.1f"|format(file.size / 1024) }} KB</div>
+                        </div>
+                        <div class="file-actions">
+                            <a href="/download_class_file/{{ file.filename }}" class="btn btn-primary">
+                                📥 Download
+                            </a>
+                            <button class="btn btn-secondary" onclick="viewFileInfo('{{ file.filename }}')">
+                                👁️ Info
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <h3>No Class Files Found</h3>
+                <p>Create your first class Excel file to get started.</p>
+                <a href="{% if user_role == 'teacher' %}/teacher_dashboard{% else %}/admin{% endif %}" class="btn btn-primary">
+                    Create Class File
+                </a>
+            </div>
+        {% endif %}
+    </div>
+    
+    <script>
+        function viewFileInfo(filename) {
+            // Extract class information from filename
+            const parts = filename.replace('.xlsx', '').split('_');
+            if (parts.length >= 3) {
+                const studyYear = parts[0];
+                const department = parts.slice(1, -1).join(' ').replace(/_/g, ' ');
+                const section = parts[parts.length - 1];
+                
+                alert(`Class Information:\n\nStudy Year: ${studyYear}\nDepartment: ${department}\nSection: ${section}\n\nFilename: ${filename}`);
+            } else {
+                alert(`File: ${filename}`);
+            }
+        }
+    </script>
+</body>
+</html>

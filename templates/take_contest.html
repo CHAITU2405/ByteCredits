@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Take Contest - ByteCredits</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .exam-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            margin: 2rem auto;
+            padding: 2rem;
+            max-width: 1000px;
+        }
+        .exam-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            color: white;
+        }
+        .exam-header h1 {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .timer-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+        .timer-warning {
+            background: linear-gradient(135deg, #ff4757, #c44569) !important;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .question-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #667eea;
+        }
+        .question-number {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-right: 1rem;
+        }
+        .question-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .question-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0;
+        }
+        .question-meta {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+        .meta-badge {
+            background: #f8f9fa;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            color: #495057;
+            border: 1px solid #e9ecef;
+        }
+        .question-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+        }
+        .options-container {
+            margin-bottom: 1.5rem;
+        }
+        .option-item {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .option-item:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+        }
+        .option-item.selected {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: #667eea;
+        }
+        .option-radio {
+            margin-right: 1rem;
+        }
+        .answer-textarea {
+            width: 100%;
+            min-height: 150px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 1rem;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            resize: vertical;
+        }
+        .answer-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .submit-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .btn-submit {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border: none;
+            border-radius: 15px;
+            padding: 1rem 2rem;
+            color: white;
+            font-weight: 700;
+            font-size: 1.1rem;
+            box-shadow: 0 10px 30px rgba(40, 167, 69, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn-submit:hover {
+            background: linear-gradient(135deg, #218838, #1e7e34);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(40, 167, 69, 0.4);
+        }
+        .btn-submit:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .section-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .progress-container {
+            background: white;
+            border-radius: 15px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .progress-bar {
+            height: 10px;
+            border-radius: 5px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+        .btn-back {
+            background: #6c757d;
+            border: none;
+            border-radius: 10px;
+            padding: 0.5rem 1.5rem;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        .btn-back:hover {
+            background: #5a6268;
+            color: white;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="timer-container" id="timer">
+        <i class="fas fa-clock"></i> <span id="time-display">00:00</span>
+    </div>
+
+    <div class="container">
+        <div class="exam-container">
+            <a href="{{ url_for('contests_list') }}" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Back to Contests
+            </a>
+            
+            <div class="exam-header">
+                <h1><i class="fas fa-trophy"></i> {{ contest.title }}</h1>
+                <p>{{ contest.description or 'Contest Exam' }}</p>
+                <div class="row mt-3">
+                    <div class="col-md-3">
+                        <strong><i class="fas fa-book"></i> {{ contest.subject_name }}</strong>
+                    </div>
+                    <div class="col-md-3">
+                        <strong><i class="fas fa-question-circle"></i> {{ contest.total_questions }} Questions</strong>
+                    </div>
+                    <div class="col-md-3">
+                        <strong><i class="fas fa-star"></i> {{ contest.total_marks }} Marks</strong>
+                    </div>
+                    <div class="col-md-3">
+                        <strong><i class="fas fa-layer-group"></i> {{ contest.difficulty_level.title() }}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="progress-container">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span><strong>Progress</strong></span>
+                    <span id="progress-text">0 / {{ contest.total_questions }}</span>
+                </div>
+                <div class="progress" style="height: 10px;">
+                    <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <form id="exam-form" method="POST" action="{{ url_for('submit_contest', contest_id=contest.contest_id) }}">
+                <input type="hidden" name="time_taken" id="time-taken" value="0">
+                
+                {% if 'sections' in questions %}
+                    <!-- Section-based format -->
+                    {% for section in questions.sections %}
+                        <div class="section-header">
+                            <i class="fas fa-layer-group"></i> {{ section.section_name }}
+                            <span class="float-end">{{ section.questions|length }} Questions</span>
+                        </div>
+                        
+                        {% for question in section.questions %}
+                            <div class="question-card">
+                                <div class="question-header">
+                                    <div class="question-number">{{ question.id }}</div>
+                                    <div>
+                                        <h3 class="question-title">{{ question.question }}</h3>
+                                        <div class="question-meta">
+                                            <span class="meta-badge">
+                                                <i class="fas fa-star"></i> {{ question.marks }} marks
+                                            </span>
+                                            <span class="meta-badge">
+                                                <i class="fas fa-tag"></i> {{ question.type.replace('_', ' ').title() }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {% if question.type == 'multiple_choice' and question.options %}
+                                    <div class="options-container">
+                                        {% for option in question.options %}
+                                            <div class="option-item" onclick="selectOption(this, '{{ question.id }}', '{{ option }}')">
+                                                <input type="radio" name="answer_{{ question.id }}" value="{{ option }}" 
+                                                       class="option-radio" style="display: none;">
+                                                {{ option }}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% elif question.type == 'short_answer' %}
+                                    <textarea name="answer_{{ question.id }}" 
+                                              class="answer-textarea" 
+                                              placeholder="Write your short answer here..."></textarea>
+                                {% elif question.type == 'descriptive' %}
+                                    <textarea name="answer_{{ question.id }}" 
+                                              class="answer-textarea" 
+                                              placeholder="Write your detailed answer here..."></textarea>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+                {% else %}
+                    <!-- Regular format -->
+                    {% for question in questions %}
+                        <div class="question-card">
+                            <div class="question-header">
+                                <div class="question-number">{{ question.id }}</div>
+                                <div>
+                                    <h3 class="question-title">{{ question.question }}</h3>
+                                    <div class="question-meta">
+                                        <span class="meta-badge">
+                                            <i class="fas fa-star"></i> {{ question.marks }} marks
+                                        </span>
+                                        <span class="meta-badge">
+                                            <i class="fas fa-tag"></i> {{ question.type.replace('_', ' ').title() }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {% if question.type == 'multiple_choice' and question.options %}
+                                <div class="options-container">
+                                    {% for option in question.options %}
+                                        <div class="option-item" onclick="selectOption(this, '{{ question.id }}', '{{ option }}')">
+                                            <input type="radio" name="answer_{{ question.id }}" value="{{ option }}" 
+                                                   class="option-radio" style="display: none;">
+                                            {{ option }}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% elif question.type == 'short_answer' %}
+                                <textarea name="answer_{{ question.id }}" 
+                                          class="answer-textarea" 
+                                          placeholder="Write your short answer here..."></textarea>
+                            {% elif question.type == 'descriptive' %}
+                                <textarea name="answer_{{ question.id }}" 
+                                          class="answer-textarea" 
+                                          placeholder="Write your detailed answer here..."></textarea>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <div class="submit-container">
+                    <button type="submit" class="btn-submit" id="submit-btn">
+                        <i class="fas fa-paper-plane"></i> Submit Contest
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Timer functionality
+        const timeLimit = {{ contest.time_limit }}; // in minutes
+        let timeLeft = timeLimit * 60; // in seconds
+        let timerInterval;
+        
+        function updateTimer() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('time-display').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeLeft <= 300) { // 5 minutes warning
+                document.getElementById('timer').classList.add('timer-warning');
+            }
+            
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                alert('Time\'s up! Your contest will be submitted automatically.');
+                document.getElementById('exam-form').submit();
+            }
+            
+            timeLeft--;
+        }
+        
+        // Start timer
+        timerInterval = setInterval(updateTimer, 1000);
+        
+        // Update time taken
+        setInterval(() => {
+            const timeTaken = Math.floor((timeLimit * 60 - timeLeft) / 60);
+            document.getElementById('time-taken').value = timeTaken;
+        }, 1000);
+        
+        // Option selection for multiple choice
+        function selectOption(element, questionId, optionValue) {
+            // Remove selection from other options in the same question
+            const questionCard = element.closest('.question-card');
+            questionCard.querySelectorAll('.option-item').forEach(item => {
+                item.classList.remove('selected');
+                item.querySelector('input[type="radio"]').checked = false;
+            });
+            
+            // Select current option
+            element.classList.add('selected');
+            element.querySelector('input[type="radio"]').checked = true;
+            updateProgress();
+        }
+        
+        // Update progress
+        function updateProgress() {
+            const totalQuestions = {{ contest.total_questions }};
+            const answeredQuestions = document.querySelectorAll('input[type="radio"]:checked, textarea[name^="answer_"]').length;
+            const progress = (answeredQuestions / totalQuestions) * 100;
+            
+            document.getElementById('progress-bar').style.width = progress + '%';
+            document.getElementById('progress-text').textContent = `${answeredQuestions} / ${totalQuestions}`;
+        }
+        
+        // Update progress on textarea change
+        document.querySelectorAll('textarea[name^="answer_"]').forEach(textarea => {
+            textarea.addEventListener('input', updateProgress);
+        });
+        
+        // Form submission confirmation
+        document.getElementById('exam-form').addEventListener('submit', function(e) {
+            const answeredQuestions = document.querySelectorAll('input[type="radio"]:checked, textarea[name^="answer_"]').length;
+            const totalQuestions = {{ contest.total_questions }};
+            
+            if (answeredQuestions < totalQuestions) {
+                if (!confirm(`You have answered ${answeredQuestions} out of ${totalQuestions} questions. Are you sure you want to submit?`)) {
+                    e.preventDefault();
+                }
+            } else {
+                if (!confirm('Are you sure you want to submit your contest?')) {
+                    e.preventDefault();
+                }
+            }
+        });
+        
+        // Auto-save functionality (optional)
+        function autoSave() {
+            const formData = new FormData(document.getElementById('exam-form'));
+            // You can implement auto-save to localStorage or send to server
+            localStorage.setItem('contest_answers', JSON.stringify(Object.fromEntries(formData)));
+        }
+        
+        // Auto-save every 30 seconds
+        setInterval(autoSave, 30000);
+        
+        // Load saved answers on page load
+        window.addEventListener('load', function() {
+            const savedAnswers = localStorage.getItem('contest_answers');
+            if (savedAnswers) {
+                const answers = JSON.parse(savedAnswers);
+                Object.keys(answers).forEach(key => {
+                    if (key.startsWith('answer_')) {
+                        const element = document.querySelector(`[name="${key}"]`);
+                        if (element) {
+                            if (element.type === 'radio') {
+                                element.checked = true;
+                                element.closest('.option-item').classList.add('selected');
+                            } else if (element.tagName === 'TEXTAREA') {
+                                element.value = answers[key];
+                            }
+                        }
+                    }
+                });
+                updateProgress();
+            }
+        });
+    </script>
+</body>
+</html>

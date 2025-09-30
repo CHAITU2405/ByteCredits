@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Results - ByteCredits</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='ICON.png') }}">
+</head>
+<body>
+  <div class="dashboard-container">
+    <h1 class="section-title" style="text-align:center; margin-top:16px;">Check Your Result</h1>
+
+    <div class="section active" style="max-width:700px; margin:auto;">
+      <form method="POST">
+        <div class="form-group">
+          <label class="form-label" for="roll_no">Roll Number</label>
+          <input class="form-input" type="text" id="roll_no" name="roll_no" placeholder="Enter your roll number" value="{{ checked_roll or '' }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="result_id">Select Declaration</label>
+          <select class="form-input" id="result_id" name="result_id">
+            {% if recent_results and recent_results|length > 0 %}
+              {% for r in recent_results %}
+                <option value="{{ r.id }}" {% if selected_id and selected_id == r.id %}selected{% elif (not selected_id) and loop.index0 == 0 %}selected{% endif %}>
+                  {{ r.title }} — {{ r.uploaded_at.strftime('%Y-%m-%d %H:%M') if r.uploaded_at else '-' }}
+                </option>
+              {% endfor %}
+            {% else %}
+              <option value="">No declarations</option>
+            {% endif %}
+          </select>
+        </div>
+        <button class="btn btn-primary" type="submit">Check Result</button>
+        <a class="btn btn-secondary" href="/student">Back to Dashboard</a>
+      </form>
+    </div>
+
+    <div class="section active" style="max-width:800px; margin:24px auto;">
+      <h2 class="section-title">Recent Declarations</h2>
+      {% if recent_results and recent_results|length > 0 %}
+        <ul style="list-style:none; padding:0; margin:0; display:grid; gap:12px;">
+          {% for r in recent_results %}
+            <li class="card" style="padding:16px; display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <div><strong>{{ r.title }}</strong></div>
+                <div style="color:#6b7280; font-size:0.9rem;">{{ r.uploaded_at.strftime('%Y-%m-%d %H:%M') if r.uploaded_at else '-' }}</div>
+              </div>
+              <div>
+                <a class="btn btn-view" href="{{ url_for('download_result_pdf', result_id=r.id) }}">Download PDF</a>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-center">No result declaration uploaded yet.</p>
+      {% endif %}
+    </div>
+
+    <!-- Popup modal for result message -->
+    <div id="resultPopup" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+      <div style="background:#fff; width:90%; max-width:520px; border-radius:12px; box-shadow:0 20px 40px rgba(0,0,0,0.2); overflow:hidden;">
+        <div style="padding:16px 20px; border-bottom:1px solid #eee; display:flex; align-items:center; justify-content:space-between;">
+          <div id="resultPopupTitle" style="font-weight:700;">Result</div>
+          <button type="button" onclick="closeResultPopup()" style="background:none; border:none; font-size:22px; line-height:1; cursor:pointer; color:#666;">×</button>
+        </div>
+        <div style="padding:20px;">
+          <div id="resultPopupMsg" style="font-size:16px; color:#111;"></div>
+        </div>
+        <div style="padding:12px 20px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:8px;">
+          <button type="button" onclick="closeResultPopup()" class="btn btn-primary" style="min-height:auto; padding:10px 16px;">OK</button>
+        </div>
+      </div>
+    </div>
+    <script>
+      function openResultPopup(message, title) {
+        var overlay = document.getElementById('resultPopup');
+        var msg = document.getElementById('resultPopupMsg');
+        var ttl = document.getElementById('resultPopupTitle');
+        if (overlay && msg && ttl) {
+          msg.textContent = message || '';
+          ttl.textContent = title || 'Result';
+          overlay.style.display = 'flex';
+        }
+      }
+      function closeResultPopup() {
+        var overlay = document.getElementById('resultPopup');
+        if (overlay) overlay.style.display = 'none';
+      }
+      document.addEventListener('DOMContentLoaded', function() {
+        {% if checked_roll %}
+          var passed = {{ 'true' if result == 'passed' else 'false' }};
+          var roll = '{{ checked_roll }}';
+          var decl = '{{ (selected_result.title if selected_result else "latest results") | replace("'","\'") }}';
+          var msg = passed ? (`✓ Roll ${roll} is listed in ${decl}.`) : (`✗ Roll ${roll} is not found in ${decl}.`);
+          var title = passed ? 'Success' : 'Not Found';
+          openResultPopup(msg, title);
+        {% endif %}
+      });
+    </script>
+  </div>
+</body>
+</html>
+
+

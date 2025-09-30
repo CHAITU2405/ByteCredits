@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ resume.get('full_name','Student') }} - Profile</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .wrap { max-width: 860px; margin: 24px auto; background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-2xl); box-shadow: var(--shadow-lg); overflow: hidden; }
+    .hero { padding: 20px 24px; background: var(--primary-gradient); color:#fff; }
+    .section { padding: 16px 20px; border-top: 1px solid var(--gray-200); }
+    .heading { margin: 0 0 6px 0; }
+    .item { margin-bottom: 10px; }
+    ul { margin: 6px 0 0 18px; }
+    a { color: var(--primary); }
+    .badge { display:inline-block; margin: 2px 6px 2px 0; padding: 6px 10px; background: var(--primary-light); border-radius: 999px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1 class="heading">{{ resume.get('full_name','Student') }}</h1>
+      <div>{{ resume.get('headline','') }}</div>
+    </div>
+
+    <div class="section">
+      <p>{{ resume.get('about','') }}</p>
+      <div>
+        {% if resume.get('email') %}<div>Email: <a href="mailto:{{ resume.get('email') }}">{{ resume.get('email') }}</a></div>{% endif %}
+        {% if resume.get('phone') %}<div>Phone: {{ resume.get('phone') }}</div>{% endif %}
+        {% if resume.get('linkedin') %}<div>LinkedIn: <a href="{{ resume.get('linkedin') }}" target="_blank">{{ resume.get('linkedin') }}</a></div>{% endif %}
+        {% if resume.get('github') %}<div>GitHub: <a href="{{ resume.get('github') }}" target="_blank">{{ resume.get('github') }}</a></div>{% endif %}
+      </div>
+    </div>
+
+    {% set edu = resume.get('education') %}
+    {% if edu %}
+    <div class="section">
+      <h3 class="heading">Education</h3>
+      {% set items = edu if edu is sequence else [] %}
+      {% for e in items %}
+        {% if e is string %}
+          {% set e = {'summary': e} %}
+        {% endif %}
+        {% set degree = e.get('degree') or e.get('Btech') or e.get('Diploma') or e.get('course') or e.get('qualification') %}
+        {% set institute = e.get('institute') or e.get('College name') or e.get('college') or e.get('school') %}
+        {% set year = e.get('year') or e.get('Year') or e.get('duration') or e.get('Duration') %}
+        {% set cg = e.get('cgpa') or e.get('CGPA') or e.get('percentage') or e.get('Percentage') %}
+        <div class="item">
+          {% if degree or institute or year %}
+            <strong>{{ degree or '' }}</strong>{% if institute %} — {{ institute }}{% endif %}{% if year %} ({{ year }}){% endif %}
+            {% if cg %} - {{ 'CGPA' if e.get('cgpa') or e.get('CGPA') else 'Percentage' }} {{ cg }}{% endif %}
+          {% else %}
+            {{ e.get('summary','') }}
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% set exp = resume.get('experience') %}
+    {% if exp %}
+    <div class="section">
+      <h3 class="heading">Experience</h3>
+      {% for x in exp %}
+        <div class="item">
+          {% set role = x.get('role') or x.get('Role') or x.get('position') or x.get('Position') %}
+          {% set company = x.get('company') or x.get('Company') or x.get('organization') or x.get('Organization') %}
+          {% set duration = x.get('duration') or x.get('Duration') %}
+          {% set summary = x.get('summary') or x.get('Summary') or x.get('desc') or x.get('description') %}
+          {% if role or company or duration %}
+            <strong>{{ role or '' }}</strong>{% if company %} — {{ company }}{% endif %}{% if duration %} ({{ duration }}){% endif %}
+          {% endif %}
+          <div>{{ summary or (x if x is string else '') }}</div>
+        </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% set prj = resume.get('projects') %}
+    {% if prj %}
+    <div class="section">
+      <h3 class="heading">Projects</h3>
+      {% for p in prj %}
+        <div class="item">
+          {% set name = p.get('name') or p.get('Name') or p.get('title') or p.get('Title') %}
+          {% set tech = p.get('tech') or p.get('Tech') or p.get('technology') or p.get('Technology') or p.get('stack') %}
+          {% set link = p.get('link') or p.get('Link') or p.get('url') or p.get('URL') %}
+          {% set summary = p.get('summary') or p.get('Summary') or p.get('desc') or p.get('description') %}
+          {% if name or tech %}
+            <strong>{{ name or '' }}</strong>{% if tech %} — {{ tech }}{% endif %}
+          {% endif %}
+          {% if link %}<div><a href="{{ link }}" target="_blank">{{ link }}</a></div>{% endif %}
+          <div>{{ summary or (p if p is string else '') }}</div>
+        </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if resume.get('skills') %}
+    <div class="section">
+      <h3 class="heading">Skills</h3>
+      {% for s in resume.get('skills').split(',') %}
+        <span class="badge">{{ s.strip() }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% set certs = resume.get('certificates') %}
+    {% if certs %}
+    <div class="section">
+      <h3 class="heading">Certificates</h3>
+      {% for c in certs %}
+        {% if c is string %}
+          {% set c = {'title': c} %}
+        {% endif %}
+        <div class="item">
+          <strong>{{ c.get('title','') }}</strong>
+          {% if c.get('issuer') %} — {{ c.get('issuer') }}{% endif %}
+          {% if c.get('year') %} ({{ c.get('year') }}){% endif %}
+          {% if c.get('link') %}<div><a href="{{ c.get('link') }}" target="_blank">{{ c.get('link') }}</a></div>{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% set ach = resume.get('achievements') %}
+    {% if ach %}
+    <div class="section">
+      <h3 class="heading">Achievements</h3>
+      {% for a in ach %}
+        {% if a is string %}
+          {% set a = {'title': a} %}
+        {% endif %}
+        <div class="item">
+          <strong>{{ a.get('title','') }}</strong>
+          {% if a.get('issuer') %} — {{ a.get('issuer') }}{% endif %}
+          {% if a.get('year') %} ({{ a.get('year') }}){% endif %}
+          <div>{{ a.get('summary','') }}</div>
+          {% if a.get('link') %}<div><a href="{{ a.get('link') }}" target="_blank">{{ a.get('link') }}</a></div>{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</body>
+</html>
+
+

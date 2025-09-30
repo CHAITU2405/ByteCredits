@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Class Files - ByteCredits</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background: var(--light-gray);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: var(--white);
+            padding: var(--space-6) var(--space-8);
+            box-shadow: var(--shadow-sm);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .title {
+            font-size: var(--font-size-3xl);
+            color: var(--gray-900);
+            margin-bottom: var(--space-2);
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: var(--gray-600);
+            text-align: center;
+            font-size: var(--font-size-lg);
+            font-weight: 400;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--space-8);
+        }
+
+        .back-link {
+            display: inline-block;
+            color: var(--gray-600);
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: var(--space-6);
+            padding: var(--space-2) var(--space-4);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            transition: all var(--transition-fast);
+        }
+
+        .back-link:hover {
+            background: var(--gray-50);
+            color: var(--gray-900);
+        }
+
+        .filter-section {
+            background: var(--white);
+            padding: var(--space-6);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: var(--space-6);
+        }
+
+        .filter-title {
+            font-size: var(--font-size-xl);
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: var(--space-4);
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-4);
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: var(--space-2);
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: var(--space-3);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            font-size: var(--font-size-sm);
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: var(--space-3);
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: var(--space-3) var(--space-4);
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            transition: all var(--transition-fast);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-200);
+        }
+
+        .class-files-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: var(--space-4);
+        }
+
+        .class-file-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            transition: all var(--transition-fast);
+        }
+
+        .class-file-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .class-file-title {
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: var(--space-2);
+        }
+
+        .class-file-info {
+            color: var(--gray-600);
+            font-size: var(--font-size-sm);
+            margin-bottom: var(--space-4);
+        }
+
+        .class-file-actions {
+            display: flex;
+            gap: var(--space-2);
+            flex-wrap: wrap;
+        }
+
+        .btn-view {
+            background: var(--info);
+            color: var(--white);
+        }
+
+        .btn-view:hover {
+            background: var(--info-dark);
+        }
+
+        .btn-edit {
+            background: var(--warning);
+            color: var(--white);
+        }
+
+        .btn-edit:hover {
+            background: var(--warning-dark);
+        }
+
+        .btn-download {
+            background: var(--success);
+            color: var(--white);
+        }
+
+        .btn-download:hover {
+            background: var(--success-dark);
+        }
+
+        .no-files {
+            text-align: center;
+            padding: var(--space-8);
+            color: var(--gray-500);
+        }
+
+        .loading {
+            text-align: center;
+            padding: var(--space-8);
+            color: var(--gray-600);
+        }
+
+        @media (max-width: 768px) {
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-actions {
+                justify-content: center;
+            }
+            
+            .class-files-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="title">📊 Attendance Class Files</h1>
+        <p class="subtitle">View and manage attendance records by class</p>
+    </div>
+
+    <div class="container">
+        <a href="/admin_dashboard" class="back-link">← Back to Admin Dashboard</a>
+
+        <div class="filter-section">
+            <h2 class="filter-title">Filter Class Files</h2>
+            <form method="GET" action="/attendance_class_files">
+                <div class="filter-grid">
+                    <div class="filter-group">
+                        <label for="class_name">Class Name:</label>
+                        <input type="text" id="class_name" name="class_name" value="{{ request.args.get('class_name', '') }}" placeholder="e.g., 3_CSE_C">
+                    </div>
+                    <div class="filter-group">
+                        <label for="from_date">From Date:</label>
+                        <input type="date" id="from_date" name="from_date" value="{{ request.args.get('from_date', '') }}">
+                    </div>
+                    <div class="filter-group">
+                        <label for="to_date">To Date:</label>
+                        <input type="date" id="to_date" name="to_date" value="{{ request.args.get('to_date', '') }}">
+                    </div>
+                    <div class="filter-group">
+                        <label for="subject">Subject:</label>
+                        <input type="text" id="subject" name="subject" value="{{ request.args.get('subject', '') }}" placeholder="e.g., Mathematics">
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button type="submit" class="btn btn-primary">
+                        🔍 Filter Files
+                    </button>
+                    <a href="/attendance_class_files" class="btn btn-secondary">
+                        🗑️ Clear Filters
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        {% if class_files %}
+        <div class="class-files-grid">
+            {% for file in class_files %}
+            <div class="class-file-card">
+                <h3 class="class-file-title">{{ file.class_name or 'General Attendance' }}</h3>
+                <div class="class-file-info">
+                    <p><strong>File:</strong> {{ file.filename }}</p>
+                    <p><strong>Subject:</strong> {{ file.subject or 'General' }}</p>
+                    <p><strong>Date:</strong> {{ file.date.strftime('%Y-%m-%d') if file.date else 'N/A' }}</p>
+                    <p><strong>Size:</strong> {{ file.size }}</p>
+                </div>
+                <div class="class-file-actions">
+                    <a href="/view_attendance_data/{{ file.filename }}" class="btn btn-view">
+                        👁️ View Attendance
+                    </a>
+                    <a href="/edit_attendance/{{ file.filename }}" class="btn btn-edit">
+                        ✏️ Edit Attendance
+                    </a>
+                    <a href="/download_attendance_file/{{ file.filename }}" class="btn btn-download">
+                        📥 Download
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-files">
+            <h3>No class files found</h3>
+            <p>No attendance files match your current filters.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Auto-submit form when filters change
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterInputs = document.querySelectorAll('.filter-group input, .filter-group select');
+            filterInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    // Optional: Auto-submit on change
+                    // this.form.submit();
+                });
+            });
+        });
+
+        // Clear filters function
+        function clearFilters() {
+            document.getElementById('class_name').value = '';
+            document.getElementById('from_date').value = '';
+            document.getElementById('to_date').value = '';
+            document.getElementById('subject').value = '';
+        }
+    </script>
+</body>
+</html>

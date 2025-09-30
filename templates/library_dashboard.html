@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Library Management - ByteCredits</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background: var(--light-gray);
+            min-height: 100vh;
+        }
+
+        /* Library Dashboard Specific Styles */
+        .library-welcome {
+            text-align: center;
+            margin-bottom: var(--space-8);
+            padding: var(--space-8) 0;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border-radius: var(--radius-lg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .library-welcome::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .library-welcome .welcome-title {
+            font-size: var(--text-4xl);
+            font-weight: var(--font-bold);
+            margin-bottom: var(--space-2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .library-welcome .welcome-subtitle {
+            font-size: var(--text-lg);
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .library-actions {
+            display: flex;
+            gap: var(--space-4);
+            justify-content: center;
+            margin-bottom: var(--space-8);
+            flex-wrap: wrap;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-6);
+            margin-bottom: var(--space-8);
+        }
+
+        .stat-card {
+            background: var(--white);
+            padding: var(--space-6);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            text-align: center;
+            border: 1px solid var(--gray-200);
+            transition: all var(--transition-normal);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-number {
+            font-size: var(--font-size-4xl);
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: var(--space-2);
+        }
+
+        .stat-label {
+            color: var(--gray-600);
+            font-size: var(--font-size-base);
+            font-weight: 500;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-6);
+            margin-bottom: var(--space-8);
+        }
+
+        .library-card {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-normal);
+            cursor: pointer;
+            border: 1px solid var(--gray-200);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .library-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+            transform: scaleX(0);
+            transition: transform var(--transition-normal);
+        }
+
+        .library-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .library-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: var(--space-4);
+            display: block;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+
+        .card-title {
+            font-size: var(--font-size-lg);
+            color: var(--gray-900);
+            margin-bottom: var(--space-2);
+            font-weight: 600;
+        }
+
+        .card-description {
+            color: var(--gray-600);
+            font-size: var(--font-size-sm);
+            line-height: 1.5;
+        }
+
+        .section {
+            display: none;
+            background: var(--white);
+            padding: var(--space-8);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            max-width: 1200px;
+            margin: auto;
+            border: 1px solid var(--gray-200);
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeInUp 0.4s ease-out;
+        }
+
+        .section-title {
+            font-size: var(--font-size-2xl);
+            color: var(--gray-900);
+            margin-bottom: var(--space-6);
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            margin-top: var(--space-6);
+        }
+
+        .table th,
+        .table td {
+            padding: var(--space-4);
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .table th {
+            background: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: var(--font-size-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .table tr:hover {
+            background: var(--gray-50);
+        }
+
+        .status-issued {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            font-size: var(--font-size-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-returned {
+            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+            color: #0c5460;
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            font-size: var(--font-size-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-overdue {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            font-size: var(--font-size-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn {
+            padding: var(--space-2) var(--space-4);
+            border: none;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            transition: all var(--transition-fast);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: #4a90e2;
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: var(--white);
+        }
+
+        .btn-success:hover {
+            background: #2d8a4e;
+            transform: translateY(-1px);
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: var(--white);
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: var(--white);
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--gray-600);
+            color: var(--white);
+        }
+
+        .btn-secondary:hover {
+            background: #4a5568;
+            transform: translateY(-1px);
+        }
+
+        .form-group {
+            margin-bottom: var(--space-4);
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: var(--space-2);
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: var(--space-3);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            font-size: var(--font-size-base);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-4);
+        }
+
+        .alert {
+            padding: var(--space-4);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-6);
+            font-size: var(--font-size-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .animate-delay-1 { animation-delay: 0.1s; }
+        .animate-delay-2 { animation-delay: 0.2s; }
+        .animate-delay-3 { animation-delay: 0.3s; }
+        .animate-delay-4 { animation-delay: 0.4s; }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .library-container {
+                padding: var(--space-4);
+            }
+
+            .library-header {
+                padding: var(--space-4) var(--space-6);
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+                gap: var(--space-4);
+            }
+
+            .stats-container {
+                grid-template-columns: 1fr;
+                gap: var(--space-4);
+            }
+
+            .section {
+                padding: var(--space-6);
+                margin: var(--space-4);
+            }
+
+            .table {
+                font-size: var(--font-size-sm);
+            }
+
+            .table th,
+            .table td {
+                padding: var(--space-2) var(--space-3);
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="dashboard-container">
+                {% for message in messages %}
+                    <div class="alert alert-success animate-fade-in">
+                        <span>✓</span>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="dashboard-container">
+        <!-- Welcome Section -->
+        <div class="library-welcome">
+            <h1 class="welcome-title">Library Management 📚</h1>
+            <p class="welcome-subtitle">Manage books, track student transactions, and monitor library operations</p>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="library-actions">
+            <a href="/logout" class="action-btn">
+                <span class="action-icon">🚪</span>
+                <span class="action-text">Logout</span>
+            </a>
+            <a href="#" class="action-btn" onclick="showSection('book-management')">
+                <span class="action-icon">📖</span>
+                <span class="action-text">Books</span>
+            </a>
+            <a href="#" class="action-btn" onclick="showSection('issue-books')">
+                <span class="action-icon">📤</span>
+                <span class="action-text">Issue</span>
+            </a>
+            <a href="#" class="action-btn" onclick="showSection('return-books')">
+                <span class="action-icon">📥</span>
+                <span class="action-text">Return</span>
+            </a>
+            <a href="#" class="action-btn" onclick="showSection('transaction-history')">
+                <span class="action-icon">📊</span>
+                <span class="action-text">History</span>
+            </a>
+        </div>
+        <!-- Statistics Cards -->
+        <div class="stats-container">
+            <div class="stat-card animate-fade-in animate-delay-1">
+                <div class="stat-number">{{ total_books }}</div>
+                <div class="stat-label">Total Books</div>
+            </div>
+            <div class="stat-card animate-fade-in animate-delay-2">
+                <div class="stat-number">{{ available_books }}</div>
+                <div class="stat-label">Available Books</div>
+            </div>
+            <div class="stat-card animate-fade-in animate-delay-3">
+                <div class="stat-number">{{ issued_books }}</div>
+                <div class="stat-label">Books Issued</div>
+            </div>
+            <div class="stat-card animate-fade-in animate-delay-4">
+                <div class="stat-number">{{ overdue_books }}</div>
+                <div class="stat-label">Overdue Books</div>
+            </div>
+        </div>
+
+        <!-- Library Cards -->
+        <div class="cards-grid">
+            <div class="library-card animate-fade-in animate-delay-1" onclick="showSection('book-management')">
+                <span class="card-icon">📖</span>
+                <h3 class="card-title">Book Management</h3>
+                <p class="card-description">Add, edit, and manage library books and inventory with comprehensive cataloging and search capabilities.</p>
+            </div>
+            
+            <div class="library-card animate-fade-in animate-delay-2" onclick="showSection('issue-books')">
+                <span class="card-icon">📤</span>
+                <h3 class="card-title">Issue Books</h3>
+                <p class="card-description">Issue books to students using NFC cards with automated student verification and due date management.</p>
+            </div>
+            
+            <div class="library-card animate-fade-in animate-delay-3" onclick="showSection('return-books')">
+                <span class="card-icon">📥</span>
+                <h3 class="card-title">Return Books</h3>
+                <p class="card-description">Process book returns and manage fines with automated fine calculation and payment tracking.</p>
+            </div>
+            
+            <div class="library-card animate-fade-in animate-delay-4" onclick="showSection('transaction-history')">
+                <span class="card-icon">📊</span>
+                <h3 class="card-title">Transaction History</h3>
+                <p class="card-description">View comprehensive library transactions and reports with filtering and export capabilities.</p>
+            </div>
+            
+            <div class="library-card animate-fade-in animate-delay-1" onclick="showSection('student-history')">
+                <span class="card-icon">👥</span>
+                <h3 class="card-title">Student History</h3>
+                <p class="card-description">View individual student book history and borrowing patterns for personalized service.</p>
+            </div>
+            
+            <div class="library-card animate-fade-in animate-delay-2" onclick="showSection('overdue-books')">
+                <span class="card-icon">⚠️</span>
+                <h3 class="card-title">Overdue Books</h3>
+                <p class="card-description">Manage overdue books and fines with automated reminders and escalation procedures.</p>
+            </div>
+        </div>
+
+        <!-- Sections -->
+        <div id="book-management" class="section active">
+            <div class="dashboard-card">
+                <h2 class="dashboard-title">Book Management</h2>
+                <p class="dashboard-subtitle">Add, edit, and manage library books and inventory</p>
+                
+                <div class="form-section">
+                    <div class="form-actions">
+                        <button class="btn btn-primary" onclick="showAddBookForm()">
+                            <span class="btn-icon">➕</span>
+                            Add New Book
+                        </button>
+                    </div>
+                </div>
+            
+                <div id="addBookForm" class="form-section" style="display: none;">
+                    <h3 class="form-section-title">Add New Book</h3>
+                    <form method="POST" action="/library/add_book" class="form-grid">
+                        <div class="form-group">
+                            <label for="book_id" class="form-label">Book ID *</label>
+                            <input type="text" id="book_id" name="book_id" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="title" class="form-label">Title *</label>
+                            <input type="text" id="title" name="title" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="author" class="form-label">Author *</label>
+                            <input type="text" id="author" name="author" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="isbn" class="form-label">ISBN</label>
+                            <input type="text" id="isbn" name="isbn" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="category" class="form-label">Category</label>
+                            <select id="category" name="category" class="form-select">
+                                <option value="">Select Category</option>
+                                <option value="Academic">Academic</option>
+                                <option value="Fiction">Fiction</option>
+                                <option value="Non-Fiction">Non-Fiction</option>
+                                <option value="Reference">Reference</option>
+                                <option value="Technical">Technical</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="publisher" class="form-label">Publisher</label>
+                            <input type="text" id="publisher" name="publisher" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="publication_year" class="form-label">Publication Year</label>
+                            <input type="number" id="publication_year" name="publication_year" class="form-input" min="1900" max="2025">
+                        </div>
+                        <div class="form-group">
+                            <label for="total_copies" class="form-label">Total Copies *</label>
+                            <input type="number" id="total_copies" name="total_copies" class="form-input" required min="1" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="location" class="form-label">Location</label>
+                            <input type="text" id="location" name="location" class="form-input" placeholder="e.g., Shelf A-1, Row 3">
+                        </div>
+                        <div class="form-group form-group-full">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea id="description" name="description" class="form-textarea" rows="3"></textarea>
+                        </div>
+                        <div class="form-group form-group-full">
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    <span class="btn-icon">💾</span>
+                                    Add Book
+                                </button>
+                                <button type="button" class="btn btn-outline" onclick="hideAddBookForm()">
+                                    <span class="btn-icon">❌</span>
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="form-section-title">Books Inventory</h3>
+                    {% if books %}
+                        <div class="table-container">
+                            <div class="table-content">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Book ID</th>
+                                            <th>Title</th>
+                                            <th>Author</th>
+                                            <th>Category</th>
+                                            <th>Available</th>
+                                            <th>Location</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for book in books %}
+                                        <tr>
+                                            <td>{{ book.book_id }}</td>
+                                            <td>{{ book.title }}</td>
+                                            <td>{{ book.author }}</td>
+                                            <td>{{ book.category or 'N/A' }}</td>
+                                            <td>{{ book.available_copies }}/{{ book.total_copies }}</td>
+                                            <td>{{ book.location or 'N/A' }}</td>
+                                            <td>
+                                                <button class="btn btn-outline btn-sm" onclick="editBook('{{ book.id }}')">
+                                                    <span class="btn-icon">✏️</span>
+                                                    Edit
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-icon">📚</div>
+                            <div class="empty-title">No Books Found</div>
+                            <div class="empty-description">Add some books to get started with your library management.</div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div id="issue-books" class="section">
+            <div class="dashboard-card">
+                <h2 class="dashboard-title">Issue Books</h2>
+                <p class="dashboard-subtitle">Issue books to students using NFC cards</p>
+                
+                <div class="form-section">
+                    <h3 class="form-section-title">Issue Book to Student</h3>
+                    <form method="POST" action="/library/issue_book" class="form-grid">
+                        <div class="form-group">
+                            <label for="book_id" class="form-label">Select Book *</label>
+                            <select id="book_id" name="book_id" class="form-input" required>
+                                <option value="">Select a book...</option>
+                                {% for book in available_books %}
+                                <option value="{{ book.book_id }}">{{ book.title }} by {{ book.author }} (Available: {{ book.available_copies }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="due_date" class="form-label">Due Date *</label>
+                            <input type="date" id="due_date" name="due_date" class="form-input" required>
+                        </div>
+                        <div class="form-group form-group-full">
+                            <label for="nfcData" class="form-label">Student NFC Card</label>
+                            <p class="form-help">
+                                Ask student to tap their NFC card to automatically fill student details
+                            </p>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="text" id="nfcData" class="form-input" placeholder="NFC data will appear here" readonly style="flex: 1;">
+                                <button type="button" class="btn btn-secondary" onclick="startNFCScanning()" style="white-space: nowrap;">
+                                    📱 Scan NFC
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group" id="studentDetails" style="display: none;">
+                            <label for="student_name" class="form-label">Student Name</label>
+                            <input type="text" id="student_name" name="student_name" class="form-input" readonly>
+                        </div>
+                        <div class="form-group" id="studentDetails" style="display: none;">
+                            <label for="student_roll_no" class="form-label">Roll Number</label>
+                            <input type="text" id="student_roll_no" name="student_roll_no" class="form-input" readonly>
+                        </div>
+                        <div class="form-group" id="studentDetails" style="display: none;">
+                            <label for="student_email" class="form-label">Email</label>
+                            <input type="email" id="student_email" name="student_email" class="form-input" readonly>
+                        </div>
+                        <div class="form-group" id="studentDetails" style="display: none;">
+                            <label for="student_username" class="form-label">Username</label>
+                            <input type="text" id="student_username" name="student_username" class="form-input" readonly>
+                        </div>
+                        <div class="form-group form-group-full">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea id="notes" name="notes" class="form-textarea" rows="2"></textarea>
+                        </div>
+                        <div class="form-group form-group-full">
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    <span class="btn-icon">📤</span>
+                                    Issue Book
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="return-books" class="section">
+            <div class="dashboard-card">
+                <h2 class="dashboard-title">Return Books</h2>
+                <p class="dashboard-subtitle">Process book returns and manage fines</p>
+                
+                <div class="form-section">
+                    <h3 class="form-section-title">Return Book</h3>
+                    <form method="POST" action="/library/return_book" class="form-grid">
+                        <div class="form-group">
+                            <label for="transaction_id" class="form-label">Transaction ID *</label>
+                            <input type="text" id="transaction_id" name="transaction_id" class="form-input" required placeholder="Enter transaction ID">
+                        </div>
+                        <div class="form-group">
+                            <label for="fine_amount" class="form-label">Fine Amount (Credits)</label>
+                            <input type="number" id="fine_amount" name="fine_amount" class="form-input" min="0" value="0">
+                        </div>
+                        <div class="form-group form-group-full">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea id="notes" name="notes" class="form-textarea" rows="2"></textarea>
+                        </div>
+                        <div class="form-group form-group-full">
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    <span class="btn-icon">📥</span>
+                                    Return Book
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="transaction-history" class="section">
+            <div class="dashboard-card">
+                <h2 class="dashboard-title">Transaction History</h2>
+                <p class="dashboard-subtitle">View all library transactions and reports</p>
+                
+                <div class="form-section">
+                    <h3 class="form-section-title">All Transactions</h3>
+                    {% if transactions %}
+                        <div class="table-container">
+                            <div class="table-content">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Transaction ID</th>
+                                            <th>Student</th>
+                                            <th>Book</th>
+                                            <th>Issue Date</th>
+                                            <th>Due Date</th>
+                                            <th>Return Date</th>
+                                            <th>Status</th>
+                                            <th>Fine</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for transaction in transactions %}
+                                        <tr>
+                                            <td>{{ transaction.transaction_id }}</td>
+                                            <td>{{ transaction.student_name }} ({{ transaction.student_roll_no }})</td>
+                                            <td>{{ transaction.book_title }}</td>
+                                            <td>{{ transaction.issue_date.strftime('%Y-%m-%d') }}</td>
+                                            <td>{{ transaction.due_date.strftime('%Y-%m-%d') }}</td>
+                                            <td>{{ transaction.return_date.strftime('%Y-%m-%d') if transaction.return_date else 'N/A' }}</td>
+                                            <td>
+                                                <span class="status-{{ transaction.status }}">
+                                                    {{ transaction.status.title() }}
+                                                </span>
+                                            </td>
+                                            <td>₹{{ transaction.fine_amount }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-icon">📊</div>
+                            <div class="empty-title">No Transactions Found</div>
+                            <div class="empty-description">No library transactions have been recorded yet.</div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div id="student-history" class="section">
+            <div class="dashboard-card">
+                <h2 class="dashboard-title">Student History</h2>
+                <p class="dashboard-subtitle">View individual student book history</p>
+                
+                <div class="form-section">
+                    <h3 class="form-section-title">Search Student History</h3>
+                    <form method="GET" action="/library/student_history" class="form-grid">
+                        <div class="form-group">
+                            <label for="student_id" class="form-label">Student Roll Number or Username</label>
+                            <input type="text" id="student_id" name="student_id" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    <span class="btn-icon">🔍</span>
+                                    Search
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="overdue-books" class="section">
+            <div class="dashboard-card">
+                <h2 class="dashboard-title">Overdue Books</h2>
+                <p class="dashboard-subtitle">Manage overdue books and fines</p>
+                
+                <div class="form-section">
+                    <h3 class="form-section-title">Overdue Books</h3>
+                    {% if overdue_transactions %}
+                        <div class="table-container">
+                            <div class="table-content">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Transaction ID</th>
+                                            <th>Student</th>
+                                            <th>Book</th>
+                                            <th>Due Date</th>
+                                            <th>Days Overdue</th>
+                                            <th>Fine Amount</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for transaction in overdue_transactions %}
+                                        <tr>
+                                            <td>{{ transaction.transaction_id }}</td>
+                                            <td>{{ transaction.student_name }} ({{ transaction.student_roll_no }})</td>
+                                            <td>{{ transaction.book_title }}</td>
+                                            <td>{{ transaction.due_date.strftime('%Y-%m-%d') }}</td>
+                                            <td>{{ (datetime.utcnow().date() - transaction.due_date.date()).days }} days</td>
+                                            <td>₹{{ transaction.fine_amount }}</td>
+                                            <td>
+                                                <button class="btn btn-outline btn-sm" onclick="sendReminder('{{ transaction.transaction_id }}')">
+                                                    <span class="btn-icon">📧</span>
+                                                    Send Reminder
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-icon">✅</div>
+                            <div class="empty-title">No Overdue Books</div>
+                            <div class="empty-description">All books are returned on time. Great job!</div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showSection(sectionId) {
+            // Hide all sections with smooth transition
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => {
+                section.style.opacity = '0';
+                section.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    section.classList.remove('active');
+                }, 150);
+            });
+            
+            // Show selected section with smooth transition
+            setTimeout(() => {
+                const selectedSection = document.getElementById(sectionId);
+                if (selectedSection) {
+                    selectedSection.classList.add('active');
+                    selectedSection.style.opacity = '1';
+                    selectedSection.style.transform = 'translateY(0)';
+                }
+            }, 150);
+        }
+
+        function showAddBookForm() {
+            const form = document.getElementById('addBookForm');
+            form.style.display = 'block';
+            form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function hideAddBookForm() {
+            document.getElementById('addBookForm').style.display = 'none';
+        }
+
+        function editBook(bookId) {
+            showNotification('Edit book functionality coming soon! Book ID: ' + bookId, 'info');
+        }
+
+        function sendReminder(transactionId) {
+            showNotification('Send reminder functionality coming soon! Transaction ID: ' + transactionId, 'info');
+        }
+
+        // NFC functionality for issue books
+        function startNFCScanning() {
+            if ('NDEFReader' in window) {
+                const ndef = new NDEFReader();
+                ndef.scan().then(() => {
+                    ndef.addEventListener('reading', event => {
+                        const decoder = new TextDecoder();
+                        const nfcData = decoder.decode(event.message.records[0].data);
+                        
+                        try {
+                            const studentData = JSON.parse(nfcData);
+                            document.getElementById('nfcData').value = nfcData;
+                            document.getElementById('student_name').value = studentData.name || '';
+                            document.getElementById('student_roll_no').value = studentData.roll_no || '';
+                            document.getElementById('student_email').value = studentData.email || '';
+                            document.getElementById('student_username').value = studentData.username || '';
+                            
+                            // Show student details
+                            const studentDetails = document.querySelectorAll('#studentDetails');
+                            studentDetails.forEach(detail => {
+                                detail.style.display = 'block';
+                            });
+                            
+                            showNotification('Student details loaded successfully!', 'success');
+                        } catch (e) {
+                            alert('Invalid NFC data format');
+                        }
+                    });
+                }).catch(error => {
+                    alert('NFC scanning failed: ' + error.message);
+                });
+            } else {
+                // Fallback to external NFC reader
+                readExternalNFC();
+            }
+        }
+
+        // External NFC reader functionality
+        function readExternalNFC() {
+            fetch('/library/read_nfc')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('nfcData').value = 'NFC card read successfully';
+                        document.getElementById('student_name').value = data.student_name || '';
+                        document.getElementById('student_roll_no').value = data.student_roll_no || '';
+                        document.getElementById('student_email').value = data.student_email || '';
+                        document.getElementById('student_username').value = data.student_username || '';
+                        
+                        // Show student details
+                        const studentDetails = document.querySelectorAll('#studentDetails');
+                        studentDetails.forEach(detail => {
+                            detail.style.display = 'block';
+                        });
+                        
+                        showNotification('Student details loaded successfully!', 'success');
+                    } else {
+                        showNotification(data.message || 'Failed to read NFC card', 'error');
+                    }
+                })
+                .catch(error => {
+                    showNotification('Error reading NFC card: ' + error.message, 'error');
+                });
+        }
+
+        // Enhanced interaction functions
+        function enhanceInteractions() {
+            // Add ripple effect to buttons and cards
+            document.querySelectorAll('.btn, .library-card, .action-btn').forEach(element => {
+                element.addEventListener('click', function(e) {
+                    const ripple = document.createElement('span');
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.width = ripple.style.height = size + 'px';
+                    ripple.style.left = x + 'px';
+                    ripple.style.top = y + 'px';
+                    ripple.classList.add('ripple');
+                    
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+
+            // Add loading states to forms
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function() {
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.classList.add('loading');
+                        submitBtn.disabled = true;
+                    }
+                });
+            });
+
+            // Add smooth scrolling
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        }
+
+        // Keyboard shortcuts
+        function addKeyboardShortcuts() {
+            document.addEventListener('keydown', function(e) {
+                // Ctrl/Cmd + 1-6 for quick navigation
+                if ((e.ctrlKey || e.metaKey) && e.key >= '1' && e.key <= '6') {
+                    e.preventDefault();
+                    const sections = ['book-management', 'issue-books', 'return-books', 'transaction-history', 'student-history', 'overdue-books'];
+                    const sectionIndex = parseInt(e.key) - 1;
+                    if (sections[sectionIndex]) {
+                        showSection(sections[sectionIndex]);
+                    }
+                }
+                
+                // Escape to go back to book management
+                if (e.key === 'Escape') {
+                    const activeSection = document.querySelector('.section.active');
+                    if (activeSection && activeSection.id !== 'book-management') {
+                        showSection('book-management');
+                    }
+                }
+            });
+        }
+
+        // Touch gesture support for mobile
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        document.addEventListener('touchstart', function(e) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchend', function(e) {
+            if (!touchStartX || !touchStartY) return;
+            
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            
+            const diffX = touchStartX - touchEndX;
+            const diffY = touchStartY - touchEndY;
+            
+            // Swipe left/right for navigation
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+                const sections = ['book-management', 'issue-books', 'return-books', 'transaction-history', 'student-history', 'overdue-books'];
+                const currentSection = document.querySelector('.section.active');
+                if (currentSection) {
+                    const currentIndex = sections.indexOf(currentSection.id);
+                    if (currentIndex !== -1) {
+                        if (diffX > 0 && currentIndex < sections.length - 1) {
+                            // Swipe left - next section
+                            showSection(sections[currentIndex + 1]);
+                        } else if (diffX < 0 && currentIndex > 0) {
+                            // Swipe right - previous section
+                            showSection(sections[currentIndex - 1]);
+                        }
+                    }
+                }
+            }
+            
+            touchStartX = 0;
+            touchStartY = 0;
+        });
+
+        // Notification system
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <span class="notification-icon">${type === 'success' ? '✓' : type === 'info' ? 'ℹ' : '⚠'}</span>
+                <span class="notification-message">${message}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+            
+            // Auto remove
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }
+
+        // Start NFC scanning when issue books section is shown
+        document.addEventListener('DOMContentLoaded', function() {
+            enhanceInteractions();
+            addKeyboardShortcuts();
+            
+            const issueSection = document.getElementById('issue-books');
+            if (issueSection) {
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                            if (issueSection.classList.contains('active')) {
+                                startNFCScanning();
+                            }
+                        }
+                    });
+                });
+                observer.observe(issueSection, { attributes: true });
+            }
+            
+            // Add loading animation to stat cards
+            const statCards = document.querySelectorAll('.stat-card');
+            statCards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>

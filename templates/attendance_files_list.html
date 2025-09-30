@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Files - ByteCredits</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .files-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: var(--space-6);
+        }
+        
+        .page-header {
+            background: var(--gray-50);
+            padding: var(--space-6);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-6);
+        }
+        
+        .files-grid {
+            display: grid;
+            gap: var(--space-4);
+        }
+        
+        .file-card {
+            background: white;
+            padding: var(--space-6);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--gray-200);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .file-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+        
+        .file-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: var(--space-4);
+        }
+        
+        .file-info h3 {
+            margin: 0 0 var(--space-2) 0;
+            color: var(--gray-900);
+            font-size: 18px;
+        }
+        
+        .file-meta {
+            color: var(--gray-600);
+            font-size: 14px;
+            margin-bottom: var(--space-2);
+        }
+        
+        .file-dates {
+            color: var(--gray-500);
+            font-size: 12px;
+        }
+        
+        .file-actions {
+            display: flex;
+            gap: var(--space-2);
+        }
+        
+        .btn-view {
+            padding: var(--space-3) var(--space-4);
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+            transition: all 0.2s ease;
+        }
+        
+        .btn-view:hover {
+            background: #1d4ed8;
+            color: white;
+            box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        .btn-download {
+            padding: var(--space-3) var(--space-4);
+            background: #059669;
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);
+            transition: all 0.2s ease;
+        }
+        
+        .btn-download:hover {
+            background: #047857;
+            color: white;
+            box-shadow: 0 4px 8px rgba(5, 150, 105, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-3) var(--space-4);
+            background: var(--gray-100);
+            color: var(--gray-700);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-4);
+        }
+        
+        .back-btn:hover {
+            background: var(--gray-200);
+            color: var(--gray-900);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: var(--space-8);
+            color: var(--gray-500);
+        }
+        
+        .no-files {
+            text-align: center;
+            padding: var(--space-8);
+            color: var(--gray-500);
+        }
+        
+        .no-files h3 {
+            margin-bottom: var(--space-2);
+            color: var(--gray-700);
+        }
+        
+        .search-container {
+            display: flex;
+            gap: var(--space-3);
+            margin-bottom: var(--space-6);
+            align-items: center;
+        }
+        
+        .search-bar {
+            flex: 1;
+            padding: var(--space-3) var(--space-4);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            font-size: var(--font-size-base);
+            background: white;
+        }
+        
+        .search-bar:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .search-bar::placeholder {
+            color: var(--gray-400);
+        }
+        
+        .refresh-btn {
+            padding: var(--space-3) var(--space-4);
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+        }
+        
+        .refresh-btn:hover {
+            background: #1d4ed8;
+            box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+        }
+        
+        .search-results-info {
+            margin-bottom: var(--space-4);
+            color: var(--gray-600);
+            font-size: var(--font-size-sm);
+        }
+        
+        .file-card.hidden {
+            display: none;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="files-container">
+        <a href="{{ url_for('admin_dashboard' if user_role == 'admin' else 'teacher_dashboard') }}" class="back-btn">
+            ← Back to Dashboard
+        </a>
+        
+        <div class="page-header">
+            <h1 style="margin: 0 0 var(--space-2) 0; color: var(--gray-900);">Attendance Files</h1>
+            <p style="margin: 0; color: var(--gray-600);">View and download attendance records for all classes</p>
+        </div>
+        
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-bar" placeholder="Search files by name, department, section, or year..." autocomplete="off">
+            <button onclick="clearSearch()" class="refresh-btn" title="Clear Search" id="clearBtn" style="display: none;">
+                ✕ Clear
+            </button>
+            <button onclick="loadFiles()" class="refresh-btn" title="Refresh Files">
+                ↻ Refresh
+            </button>
+        </div>
+        
+        <div id="searchResultsInfo" class="search-results-info" style="display: none;"></div>
+        
+        <div id="filesList">
+            <div class="loading">
+                <h3>Loading attendance files...</h3>
+                <p>Please wait while we fetch your attendance files.</p>
+            </div>
+        </div>
+        
+    </div>
+    
+    <script>
+        let allFiles = []; // Store all files for search functionality
+        
+        // Load files when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFiles();
+            setupSearch();
+        });
+        
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', function() {
+                filterFiles(this.value);
+            });
+        }
+        
+        function clearSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const clearBtn = document.getElementById('clearBtn');
+            searchInput.value = '';
+            clearBtn.style.display = 'none';
+            filterFiles('');
+        }
+        
+        function filterFiles(searchTerm) {
+            const searchResultsInfo = document.getElementById('searchResultsInfo');
+            const fileCards = document.querySelectorAll('.file-card');
+            const clearBtn = document.getElementById('clearBtn');
+            
+            if (!searchTerm.trim()) {
+                // Show all files if search is empty
+                fileCards.forEach(card => {
+                    card.classList.remove('hidden');
+                });
+                searchResultsInfo.style.display = 'none';
+                clearBtn.style.display = 'none';
+                return;
+            }
+            
+            // Show clear button when searching
+            clearBtn.style.display = 'inline-flex';
+            
+            const term = searchTerm.toLowerCase();
+            let visibleCount = 0;
+            
+            fileCards.forEach(card => {
+                const filename = card.querySelector('h3').textContent.toLowerCase();
+                const fileMeta = card.querySelector('.file-meta').textContent.toLowerCase();
+                const fileDates = card.querySelector('.file-dates').textContent.toLowerCase();
+                
+                // Search in filename, meta info, and dates
+                if (filename.includes(term) || fileMeta.includes(term) || fileDates.includes(term)) {
+                    card.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+            
+            // Show search results info
+            if (visibleCount === 0) {
+                searchResultsInfo.innerHTML = `No files found matching "${searchTerm}"`;
+                searchResultsInfo.style.display = 'block';
+            } else if (visibleCount < allFiles.length) {
+                searchResultsInfo.innerHTML = `Showing ${visibleCount} of ${allFiles.length} files matching "${searchTerm}"`;
+                searchResultsInfo.style.display = 'block';
+            } else {
+                searchResultsInfo.style.display = 'none';
+            }
+        }
+        
+        function loadFiles() {
+            const filesListDiv = document.getElementById('filesList');
+            filesListDiv.innerHTML = `
+                <div class="loading">
+                    <h3>Loading attendance files...</h3>
+                    <p>Please wait while we fetch your attendance files.</p>
+                </div>
+            `;
+            
+            fetch('/list_attendance_files')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayFiles(data.files);
+                    } else {
+                        showError('Error loading attendance files: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching attendance files:', error);
+                    showError('Error loading attendance files. Please try again.');
+                });
+        }
+        
+        function displayFiles(files) {
+            const filesListDiv = document.getElementById('filesList');
+            
+            // Store files for search functionality
+            allFiles = files;
+            
+            if (files.length === 0) {
+                filesListDiv.innerHTML = `
+                    <div class="no-files">
+                        <h3>No attendance files found</h3>
+                        <p>Create a class file first to start taking attendance.</p>
+                        <a href="{{ url_for('admin_dashboard' if user_role == 'admin' else 'teacher_dashboard') }}" class="back-btn" style="margin-top: var(--space-4);">
+                            Go to Dashboard
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+            
+            let filesHTML = '<div class="files-grid">';
+            
+            files.forEach(file => {
+                const fileSize = (file.size / 1024).toFixed(1) + ' KB';
+                const datesCount = file.dates ? file.dates.length : 0;
+                const availableDates = file.dates && file.dates.length > 0 
+                    ? file.dates.slice(0, 3).join(', ') + (file.dates.length > 3 ? '...' : '')
+                    : 'No dates available';
+                
+                filesHTML += `
+                    <div class="file-card">
+                        <div class="file-header">
+                            <div class="file-info">
+                                <h3>${file.filename}</h3>
+                                <div class="file-meta">
+                                    Size: ${fileSize} | Modified: ${file.modified} | Dates: ${datesCount}
+                                </div>
+                                <div class="file-dates">
+                                    Available dates: ${availableDates}
+                                </div>
+                            </div>
+                            <div class="file-actions">
+                                <a href="/view_attendance_file/${file.filename}" class="btn-view">
+                                    👁️ View
+                                </a>
+                            <button onclick="downloadCombinedFile('${file.filename}')" class="btn-download">
+                                📥 Download All Dates
+                            </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            filesHTML += '</div>';
+            filesListDiv.innerHTML = filesHTML;
+        }
+        
+        function showError(message) {
+            const filesListDiv = document.getElementById('filesList');
+            filesListDiv.innerHTML = `
+                <div class="no-files">
+                    <h3>Error</h3>
+                    <p>${message}</p>
+                    <button onclick="loadFiles()" class="btn-view" style="margin-top: var(--space-4);">
+                        ↻ Try Again
+                    </button>
+                </div>
+            `;
+        }
+        
+        function downloadCombinedFile(filename) {
+            // Show loading state
+            const downloadBtn = event.target;
+            const originalText = downloadBtn.innerHTML;
+            downloadBtn.innerHTML = '⏳ Generating...';
+            downloadBtn.disabled = true;
+            
+            // Send request to download combined file
+            fetch('/download_combined_attendance', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    filename: filename
+                })
+            })
+            .then(async response => {
+                if (!response.ok) {
+                    try {
+                        const err = await response.json();
+                        throw new Error(err.message || 'Failed to generate combined attendance file');
+                    } catch (_) {
+                        throw new Error('Failed to generate combined attendance file');
+                    }
+                }
+                const contentType = response.headers.get('Content-Type') || '';
+                if (!contentType.includes('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')) {
+                    try {
+                        const err = await response.json();
+                        throw new Error(err.message || 'Unexpected response type');
+                    } catch (_) {
+                        throw new Error('Unexpected response type');
+                    }
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // Create download link
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Combined_${filename}`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            })
+            .catch(error => {
+                console.error('Error downloading combined attendance:', error);
+                alert(`Error generating combined attendance file: ${error.message}`);
+            })
+            .finally(() => {
+                // Reset button state
+                downloadBtn.innerHTML = originalText;
+                downloadBtn.disabled = false;
+            });
+        }
+        
+    </script>
+</body>
+</html>

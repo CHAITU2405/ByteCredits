@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Attendance Data - ByteCredits</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .attendance-viewer {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--space-6);
+        }
+        
+        .file-header {
+            background: var(--gray-50);
+            padding: var(--space-6);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-6);
+        }
+        
+        .date-filter {
+            background: white;
+            padding: var(--space-4);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-6);
+            border: 1px solid var(--gray-200);
+        }
+        
+        .date-range-controls {
+            display: flex;
+            gap: var(--space-4);
+            align-items: end;
+            flex-wrap: wrap;
+            margin-bottom: var(--space-4);
+        }
+        
+        .date-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            min-width: 150px;
+        }
+        
+        .date-input-group label {
+            font-weight: 500;
+            color: var(--gray-700);
+            font-size: 14px;
+        }
+        
+        .date-input {
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            transition: border-color 0.2s;
+            min-width: 150px;
+        }
+        
+        .date-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: var(--space-3);
+            align-items: center;
+        }
+        
+        .btn-filter {
+            padding: 12px 24px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 40px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-filter:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-clear {
+            padding: 12px 24px;
+            background: #6b7280;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 40px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-clear:hover {
+            background: #4b5563;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: var(--space-2);
+            margin: var(--space-4) 0;
+        }
+        
+        .pagination button {
+            padding: var(--space-2) var(--space-3);
+            border: 1px solid var(--gray-300);
+            background: white;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .pagination button:hover:not(:disabled) {
+            background: var(--gray-50);
+        }
+        
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .pagination button.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .pagination-info {
+            text-align: center;
+            color: var(--gray-600);
+            font-size: 14px;
+            margin: var(--space-2) 0;
+        }
+        
+        .attendance-table {
+            background: white;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: var(--space-6);
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        th, td {
+            padding: var(--space-3);
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        th {
+            background: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-900);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        tr:hover {
+            background: var(--gray-50);
+        }
+        
+        .present {
+            color: var(--success);
+            font-weight: 600;
+        }
+        
+        .absent {
+            color: var(--error);
+            font-weight: 600;
+        }
+        
+        .empty {
+            color: var(--gray-400);
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: var(--space-8);
+            color: var(--gray-500);
+        }
+        
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-3) var(--space-4);
+            background: var(--gray-100);
+            color: var(--gray-700);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-4);
+            transition: all 0.2s;
+        }
+        
+        .back-btn:hover {
+            background: var(--gray-200);
+            color: var(--gray-900);
+        }
+        
+        .date-section {
+            margin-bottom: var(--space-6);
+        }
+        
+        .date-section h4 {
+            margin: 0 0 var(--space-3) 0;
+            color: var(--gray-900);
+            font-size: 16px;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="attendance-viewer">
+        <a href="/attendance_files" class="back-btn">
+            ← Back to Files List
+        </a>
+        
+        <div class="file-header">
+            <h1 style="margin: 0 0 var(--space-2) 0; color: var(--gray-900);">View Attendance Data</h1>
+            <p style="margin: 0; color: var(--gray-600); font-size: 16px;">File: {{ filename }}</p>
+        </div>
+        
+        <div class="date-filter">
+            <h3 style="margin: 0 0 var(--space-4) 0; color: var(--gray-900);">Filter by Date Range</h3>
+            <form method="GET" action="/view_attendance_data/{{ filename }}">
+                <div class="date-range-controls">
+                    <div class="date-input-group">
+                        <label for="from_date">From Date:</label>
+                        <input type="date" id="from_date" name="from_date" value="{{ from_date }}" class="date-input">
+                    </div>
+                    <div class="date-input-group">
+                        <label for="to_date">To Date:</label>
+                        <input type="date" id="to_date" name="to_date" value="{{ to_date }}" class="date-input">
+                    </div>
+                    <div class="filter-buttons">
+                        <button type="submit" class="btn-filter">
+                            <span>🔍</span>
+                            <span>Filter</span>
+                        </button>
+                        <button type="button" class="btn-clear" onclick="clearFilters()">
+                            <span>🗑️</span>
+                            <span>Clear</span>
+                        </button>
+                        <button type="button" class="btn-filter" onclick="downloadFiltered()">
+                            <span>📥</span>
+                            <span>Download filtered</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+            
+            {% if filtered_date_sheets %}
+            {% if filter_applied %}
+            <div class="pagination-info">
+                Showing date {{ page }} of {{ total_dates }} dates (1 table per page)
+                (filtered from {{ all_date_sheets | length }} total dates)
+            </div>
+            
+            <div class="pagination">
+                <button onclick="changePage(1)" {% if page == 1 %}disabled{% endif %}>⏮️ First</button>
+                <button onclick="changePage({{ page - 1 }})" {% if page == 1 %}disabled{% endif %}>⬅️ Previous</button>
+                
+                {% for p in range([1, page - 2] | max, [total_pages + 1, page + 3] | min) %}
+                <button onclick="changePage({{ p }})" {% if p == page %}class="active"{% endif %}>{{ p }}</button>
+                {% endfor %}
+                
+                <button onclick="changePage({{ page + 1 }})" {% if page == total_pages %}disabled{% endif %}>➡️ Next</button>
+                <button onclick="changePage({{ total_pages }})" {% if page == total_pages %}disabled{% endif %}>⏭️ Last</button>
+            </div>
+            {% else %}
+            <div class="pagination-info">
+                Showing latest date ({{ total_dates }} of {{ all_date_sheets | length }} total dates available)
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+        
+        {% if paginated_dates %}
+        {% for date_str in paginated_dates %}
+        <div class="date-section">
+            <h4>📅 {{ date_str }}</h4>
+            {% if attendance_data[date_str] and attendance_data[date_str].data %}
+            <div class="attendance-table">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                {% for header in attendance_data[date_str].headers %}
+                                <th>{{ header }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in attendance_data[date_str].data %}
+                            <tr>
+                                {% for cell in row %}
+                                <td class="{% if cell == 'P' %}present{% elif cell == 'A' %}absent{% elif cell == '' %}empty{% endif %}">
+                                    {{ cell if cell else '-' }}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+            <div class="no-data">
+                <p>No attendance data found for this date.</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="no-data">
+            <h3>No attendance data found</h3>
+            {% if filter_applied %}
+            <p>No attendance data found for the selected date range.</p>
+            <button onclick="clearFilters()" class="btn-filter">Clear Filters</button>
+            {% else %}
+            <p>This file doesn't contain any attendance sheets.</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <script>
+        function changePage(newPage) {
+            const url = new URL(window.location);
+            url.searchParams.set('page', newPage);
+            window.location.href = url.toString();
+        }
+        
+        function clearFilters() {
+            const url = new URL(window.location);
+            url.searchParams.delete('from_date');
+            url.searchParams.delete('to_date');
+            url.searchParams.set('page', 1);
+            window.location.href = url.toString();
+        }
+
+        async function downloadFiltered() {
+            const fromDate = document.getElementById('from_date').value || '';
+            const toDate = document.getElementById('to_date').value || '';
+            try {
+                const resp = await fetch('/download_filtered_attendance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: '{{ filename }}', from_date: fromDate, to_date: toDate })
+                });
+                if (!resp.ok) {
+                    try { const err = await resp.json(); alert(err.message || 'Failed'); } catch { alert('Failed'); }
+                    return;
+                }
+                const ct = resp.headers.get('Content-Type') || '';
+                if (!ct.includes('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')) {
+                    try { const err = await resp.json(); alert(err.message || 'Unexpected response'); } catch { alert('Unexpected response'); }
+                    return;
+                }
+                const blob = await resp.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Filtered_{{ filename.split('.')[0] }}_${fromDate || 'start'}_to_${toDate || 'end'}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (e) {
+                alert('Error downloading filtered file');
+                console.error(e);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Chatbot - ByteCredits</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='ICON.png') }}">
+  <style>
+    .chat-container { max-width: 900px; margin: 24px auto; background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-2xl); box-shadow: var(--shadow-lg); overflow: hidden; }
+    .chat-header { padding: 16px 20px; background: var(--primary-gradient); color: var(--white); display: flex; align-items: center; justify-content: space-between; }
+    .chat-title { margin: 0; font-size: var(--font-size-xl); font-weight: var(--font-bold); }
+    .chat-body { height: 60vh; overflow-y: auto; padding: 16px; background: var(--gray-50); }
+    .message { max-width: 80%; margin-bottom: 12px; padding: 12px 14px; border-radius: var(--radius-xl); line-height: 1.5; box-shadow: var(--shadow-sm); white-space: pre-wrap; }
+    .msg-user { margin-left: auto; background: var(--primary-light); color: var(--gray-900); border: 1px solid var(--primary); }
+    .msg-bot { margin-right: auto; background: var(--white); color: var(--gray-900); border: 1px solid var(--gray-200); }
+    .chat-input { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--gray-200); background: var(--white); }
+    .chat-input input[type="text"] { flex: 1; padding: 12px 14px; border: 2px solid var(--gray-200); border-radius: var(--radius-xl); font-size: var(--font-size-base); }
+    .chat-input input[type="text"]:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+    .chat-input button { padding: 12px 16px; border: none; border-radius: var(--radius-xl); background: var(--primary); color: var(--white); font-weight: var(--font-semibold); cursor: pointer; }
+    .subject-input { width: 240px; }
+    .pdf-section { padding: 12px; background: var(--gray-100); border-bottom: 1px solid var(--gray-200); }
+    .pdf-upload { display: flex; gap: 8px; align-items: center; }
+    .pdf-upload input[type="file"] { flex: 1; padding: 8px; border: 2px solid var(--gray-200); border-radius: var(--radius-lg); }
+    .pdf-upload button { padding: 8px 12px; border: none; border-radius: var(--radius-lg); background: var(--success); color: var(--white); cursor: pointer; }
+    .pdf-info { margin-top: 8px; font-size: var(--font-size-sm); color: var(--gray-600); }
+    .pdf-list { margin-top: 8px; }
+    .pdf-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; background: var(--white); border-radius: var(--radius-lg); margin-bottom: 4px; }
+    .pdf-item span { font-size: var(--font-size-sm); }
+    .pdf-item button { padding: 4px 8px; border: none; border-radius: var(--radius-sm); background: var(--danger); color: var(--white); cursor: pointer; font-size: var(--font-size-xs); }
+    .clear-pdfs { margin-top: 8px; padding: 6px 12px; border: none; border-radius: var(--radius-lg); background: var(--danger); color: var(--white); cursor: pointer; font-size: var(--font-size-sm); }
+    .summary-section { padding: 12px; background: var(--info-light); border-bottom: 1px solid var(--gray-200); border-radius: var(--radius-lg); margin-bottom: 8px; }
+    .summary-button { padding: 8px 16px; border: none; border-radius: var(--radius-lg); background: var(--info); color: var(--white); cursor: pointer; font-size: var(--font-size-sm); margin-right: 8px; }
+    .summary-button:hover { background: var(--info-hover); }
+    .download-link { color: var(--primary); text-decoration: none; font-size: var(--font-size-sm); }
+    .download-link:hover { text-decoration: underline; }
+  </style>
+  <script>
+    function appendMessage(text, isUser) {
+      const body = document.getElementById('chatBody');
+      const div = document.createElement('div');
+      div.className = 'message ' + (isUser ? 'msg-user' : 'msg-bot');
+      div.textContent = text;
+      body.appendChild(div);
+      body.scrollTop = body.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('messageInput');
+      const subject = document.getElementById('subjectInput');
+      const text = (input.value || '').trim();
+      if (!text) return;
+      appendMessage(text, true);
+      input.value = '';
+
+      try {
+        const res = await fetch('/api/student_chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, subject: subject.value || '' })
+        });
+        const data = await res.json();
+        if (!data.success) {
+          appendMessage('Error: ' + (data.message || 'Request failed'), false);
+        } else {
+          appendMessage(data.answer || 'No answer', false);
+        }
+      } catch (e) {
+        appendMessage('Network error. Please try again.', false);
+      }
+    }
+
+    function handleKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    }
+
+    async function uploadPDF() {
+      const fileInput = document.getElementById('pdfFile');
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        alert('Please select a PDF file');
+        return;
+      }
+
+      if (!file.name.toLowerCase().endsWith('.pdf')) {
+        alert('Please select a PDF file');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('pdf_file', file);
+
+      try {
+        const response = await fetch('/api/upload_pdf', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          appendMessage(`📄 PDF uploaded: ${file.name}`, false);
+          fileInput.value = '';
+          loadPDFInfo();
+        } else {
+          appendMessage(`❌ Upload failed: ${data.message}`, false);
+        }
+      } catch (e) {
+        appendMessage('❌ Upload error. Please try again.', false);
+      }
+    }
+
+    async function loadPDFInfo() {
+      try {
+        const response = await fetch('/api/get_pdf_info');
+        const data = await response.json();
+        
+        if (data.success) {
+          updatePDFDisplay(data.pdfs);
+        }
+      } catch (e) {
+        console.error('Error loading PDF info:', e);
+      }
+    }
+
+    function updatePDFDisplay(pdfs) {
+      const pdfList = document.getElementById('pdfList');
+      const pdfCount = document.getElementById('pdfCount');
+      
+      pdfCount.textContent = `Uploaded PDFs: ${pdfs.length}`;
+      
+      if (pdfs.length === 0) {
+        pdfList.innerHTML = '<div class="pdf-item"><span>No PDFs uploaded</span></div>';
+        return;
+      }
+
+      pdfList.innerHTML = '';
+      pdfs.forEach((pdf, index) => {
+        const div = document.createElement('div');
+        div.className = 'pdf-item';
+        div.innerHTML = `
+          <span>📄 ${pdf.original_name}</span>
+          <button onclick="removePDF(${index})">Remove</button>
+        `;
+        pdfList.appendChild(div);
+      });
+    }
+
+    async function removePDF(index) {
+      // For now, we'll clear all PDFs when removing one
+      // In a more advanced implementation, you could remove individual PDFs
+      await clearAllPDFs();
+    }
+
+    async function clearAllPDFs() {
+      try {
+        const response = await fetch('/api/clear_pdfs', {
+          method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          appendMessage('🗑️ All PDFs cleared', false);
+          loadPDFInfo();
+        } else {
+          appendMessage(`❌ Clear failed: ${data.message}`, false);
+        }
+      } catch (e) {
+        appendMessage('❌ Clear error. Please try again.', false);
+      }
+    }
+
+    async function generateChatSummary() {
+      try {
+        appendMessage('📄 Generating chat summary...', false);
+        
+        const response = await fetch('/api/student_chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: 'generate pdf summary', subject: '' })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          appendMessage(data.answer, false);
+          
+          // If PDF was generated, show download link
+          if (data.pdf_generated && data.pdf_filename) {
+            showDownloadLink(data.pdf_filename);
+          }
+        } else {
+          appendMessage(`❌ Summary failed: ${data.message}`, false);
+        }
+      } catch (e) {
+        appendMessage('❌ Summary error. Please try again.', false);
+      }
+    }
+
+    function showDownloadLink(filename) {
+      const summarySection = document.getElementById('summarySection');
+      const downloadDiv = document.createElement('div');
+      downloadDiv.innerHTML = `
+        <div style="margin-top: 8px; padding: 8px; background: var(--success-light); border-radius: var(--radius-lg); border: 1px solid var(--success);">
+          <span style="color: var(--success); font-size: var(--font-size-sm);">✅ PDF Generated: </span>
+          <a href="/api/download_chat_summary/${filename}" class="download-link" download>
+            <i class="fas fa-download"></i> Download Chat Summary
+          </a>
+        </div>
+      `;
+      summarySection.appendChild(downloadDiv);
+    }
+  </script>
+  <script src="{{ url_for('static', filename='script/app.js') }}" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      appendMessage('Hi {{ session.username }}, I\'m your ByteCredits assistant. Ask any doubt!', false);
+      loadPDFInfo(); // Load existing PDFs on page load
+    });
+  </script>
+  </head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">
+      <h1 class="chat-title">Student Chatbot</h1>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <input id="subjectInput" class="form-input subject-input" type="text" placeholder="Optional: subject/topic (e.g., DBMS, Fees, NFC)">
+        <a href="/student" class="btn" style="text-decoration:none; background: var(--gray-700);">Back</a>
+      </div>
+    </div>
+    
+    <!-- PDF Upload Section -->
+    <div class="pdf-section">
+      <div class="pdf-upload">
+        <input type="file" id="pdfFile" accept=".pdf" placeholder="Select PDF file">
+        <button onclick="uploadPDF()">Upload PDF</button>
+      </div>
+      <div class="pdf-info">
+        <div id="pdfCount">Uploaded PDFs: 0</div>
+        <div class="pdf-list" id="pdfList">
+          <div class="pdf-item"><span>No PDFs uploaded</span></div>
+        </div>
+        <button class="clear-pdfs" onclick="clearAllPDFs()">Clear All PDFs</button>
+      </div>
+    </div>
+
+    <!-- Chat Summary Section -->
+    <div class="summary-section" id="summarySection">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <strong style="color: var(--info);">📄 Chat Summary</strong>
+          <div style="font-size: var(--font-size-xs); color: var(--gray-600); margin-top: 2px;">
+            Generate a PDF summary of your conversation
+          </div>
+        </div>
+        <button class="summary-button" onclick="generateChatSummary()">
+          <i class="fas fa-file-pdf"></i> Generate Summary
+        </button>
+      </div>
+    </div>
+    
+    <div id="chatBody" class="chat-body"></div>
+    <div class="chat-input">
+      <input id="messageInput" type="text" placeholder="Type your question..." onkeydown="handleKey(event)">
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+</body>
+</html>
+
+

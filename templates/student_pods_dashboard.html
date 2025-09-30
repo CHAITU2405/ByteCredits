@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Pods - Student Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .pod-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 20px;
+        }
+        .pod-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+        .pod-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            padding: 20px;
+        }
+        .member-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin: 0 5px;
+        }
+        .task-badge {
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin: 2px;
+        }
+        .progress-ring {
+            width: 60px;
+            height: 60px;
+        }
+        .progress-ring circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+        }
+        .no-pods {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        .no-pods i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #ddd;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-users"></i> Learning Pods
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('student') }}">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a class="nav-link" href="{{ url_for('logout') }}">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="display-4 text-center mb-4">
+                    <i class="fas fa-users text-primary"></i> My Learning Pods
+                </h1>
+                <p class="text-center text-muted">Collaborate with your pod members and complete AI-generated challenges</p>
+            </div>
+        </div>
+
+        {% if pods %}
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <h3>{{ pods|length }}</h3>
+                        <p class="mb-0">Active Pods</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <h3>{{ user.credits }}</h3>
+                        <p class="mb-0">Credits Earned</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <h3>{{ pods|map(attribute='pod.tasks')|map('length')|sum }}</h3>
+                        <p class="mb-0">Total Tasks</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <h3>{{ user.role.title() }}</h3>
+                        <p class="mb-0">Role</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                {% for pod_data in pods %}
+                <div class="col-lg-6 col-xl-4">
+                    <div class="card pod-card">
+                        <div class="pod-header">
+                            <h5 class="card-title mb-2">
+                                <i class="fas fa-users"></i> {{ pod_data.pod.pod_name }}
+                            </h5>
+                            <p class="mb-1">
+                                <i class="fas fa-book"></i> {{ pod_data.pod.subject }}
+                            </p>
+                            <small>
+                                <i class="fas fa-calendar"></i> 
+                                Cycle {{ pod_data.pod.cycle_number }} • 
+                                Created {{ pod_data.pod.created_at.strftime('%b %d, %Y') }}
+                            </small>
+                        </div>
+                        
+                        <div class="card-body">
+                            <!-- Pod Members -->
+                            <div class="mb-3">
+                                <h6 class="text-muted mb-2">
+                                    <i class="fas fa-user-friends"></i> Pod Members
+                                </h6>
+                                <div class="d-flex flex-wrap">
+                                    <div class="member-avatar">
+                                        {{ session['username'][0].upper() }}
+                                    </div>
+                                    {% for member in pod_data.members %}
+                                    <div class="member-avatar">
+                                        {{ member[0].upper() }}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    You ({{ pod_data.membership.role.title() }}), 
+                                    {{ pod_data.members|join(', ') }}
+                                </small>
+                            </div>
+
+                            <!-- Pod Tasks -->
+                            <div class="mb-3">
+                                <h6 class="text-muted mb-2">
+                                    <i class="fas fa-tasks"></i> Recent Tasks
+                                </h6>
+                                {% for task in pod_data.pod.tasks[:3] %}
+                                <span class="task-badge">
+                                    {{ task.task_type.replace('_', ' ').title() }}
+                                </span>
+                                {% endfor %}
+                                {% if pod_data.pod.tasks|length > 3 %}
+                                <span class="task-badge">+{{ pod_data.pod.tasks|length - 3 }} more</span>
+                                {% endif %}
+                            </div>
+
+                            <!-- Progress Ring -->
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <h6 class="text-muted mb-1">Pod Progress</h6>
+                                    <small class="text-muted">Collaboration Score</small>
+                                </div>
+                                <div class="progress-ring">
+                                    <svg class="progress-ring" width="60" height="60">
+                                        <circle class="progress-ring-circle" stroke="#e6e6e6" stroke-width="4" 
+                                                fill="transparent" r="26" cx="30" cy="30"/>
+                                        <circle class="progress-ring-circle" stroke="#4facfe" stroke-width="4" 
+                                                fill="transparent" r="26" cx="30" cy="30" 
+                                                stroke-dasharray="163.36" stroke-dashoffset="81.68"/>
+                                    </svg>
+                                    <div class="position-absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                                        <small class="fw-bold">50%</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card-footer bg-transparent">
+                            <a href="{{ url_for('pod_detail', pod_id=pod_data.pod.id) }}" 
+                               class="btn btn-primary btn-sm w-100">
+                                <i class="fas fa-eye"></i> View Pod Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-pods">
+                <i class="fas fa-users"></i>
+                <h3>No Learning Pods Yet</h3>
+                <p>You haven't been assigned to any learning pods yet. Check back later or contact your teacher.</p>
+                <a href="{{ url_for('student') }}" class="btn btn-primary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Animate progress rings
+        document.addEventListener('DOMContentLoaded', function() {
+            const progressRings = document.querySelectorAll('.progress-ring-circle');
+            progressRings.forEach(ring => {
+                const circumference = 2 * Math.PI * 26;
+                const offset = circumference - (50 / 100) * circumference;
+                ring.style.strokeDashoffset = offset;
+            });
+        });
+    </script>
+</body>
+</html>

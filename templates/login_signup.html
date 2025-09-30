@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ByteCredits - Login/Signup</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    /* Page-specific styles */
+    body {
+      background: var(--primary-gradient);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: var(--space-4);
+    }
+
+    .auth-container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      padding: var(--space-8);
+      width: 100%;
+      max-width: 480px;
+      border-radius: var(--radius-2xl);
+      box-shadow: var(--shadow-2xl);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .auth-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--primary-gradient);
+    }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: var(--space-8);
+    }
+
+    .auth-title {
+      font-size: var(--font-size-3xl);
+      color: var(--gray-900);
+      margin-bottom: var(--space-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-3);
+      font-weight: 700;
+    }
+
+    .auth-title::before {
+      content: "💳";
+      font-size: 2rem;
+    }
+
+    .auth-subtitle {
+      color: var(--gray-600);
+      font-size: var(--font-size-base);
+      font-weight: 400;
+    }
+
+    .toggle-switch {
+      display: flex;
+      justify-content: center;
+      margin-bottom: var(--space-8);
+      background: var(--gray-100);
+      border-radius: var(--radius-full);
+      padding: var(--space-1);
+      position: relative;
+      border: 1px solid var(--gray-200);
+    }
+
+    .switch-btn {
+      flex: 1;
+      text-align: center;
+      padding: var(--space-3) var(--space-6);
+      cursor: pointer;
+      border-radius: var(--radius-full);
+      transition: all var(--transition-normal);
+      font-weight: 500;
+      position: relative;
+      z-index: 2;
+      color: var(--gray-600);
+      font-size: var(--font-size-base);
+    }
+
+    .switch-btn.active {
+      background: var(--primary-gradient);
+      color: var(--white);
+      box-shadow: var(--shadow-md);
+    }
+
+    .auth-form {
+      display: none;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .auth-form.active {
+      display: flex;
+    }
+
+    .form-group {
+      position: relative;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: var(--space-2);
+      font-weight: 500;
+      color: var(--gray-700);
+      font-size: var(--font-size-sm);
+    }
+
+    .form-input,
+    .form-select {
+      width: 100%;
+      padding: var(--space-4);
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      font-size: var(--font-size-base);
+      transition: all var(--transition-fast);
+      background: var(--white);
+      font-family: inherit;
+    }
+
+    .form-input:focus,
+    .form-select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-input::placeholder {
+      color: var(--gray-400);
+    }
+
+    .auth-btn {
+      padding: var(--space-4);
+      background: var(--primary-gradient);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      font-size: var(--font-size-base);
+      font-weight: 600;
+      transition: all var(--transition-normal);
+      margin-top: var(--space-2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .auth-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left var(--transition-slow);
+    }
+
+    .auth-btn:hover::before {
+      left: 100%;
+    }
+
+    .auth-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .alert {
+      padding: var(--space-4);
+      border-radius: var(--radius-lg);
+      margin-bottom: var(--space-6);
+      font-size: var(--font-size-sm);
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .alert-success {
+      background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .alert-error {
+      background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .alert-info {
+      background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+
+    .auth-footer {
+      text-align: center;
+      margin-top: var(--space-6);
+      color: var(--gray-500);
+      font-size: var(--font-size-sm);
+      font-weight: 400;
+    }
+
+    /* Animations */
+    .animate-fade-in {
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    .animate-slide-up {
+      animation: slideUp 0.4s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 480px) {
+      .auth-container {
+        padding: var(--space-6) var(--space-4);
+        margin: var(--space-4);
+      }
+
+      .toggle-switch {
+        font-size: var(--font-size-sm);
+      }
+
+      .switch-btn {
+        padding: var(--space-2) var(--space-4);
+      }
+
+      .auth-title {
+        font-size: var(--font-size-2xl);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="auth-container animate-fade-in">
+    <div class="auth-header animate-slide-up">
+      <h1 class="auth-title">ByteCredits</h1>
+      <p class="auth-subtitle">NFC Payment System for Colleges</p>
+    </div>
+    
+    <!-- Flash Message Display -->
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-success animate-slide-up">
+            <span>✓</span>
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="toggle-switch animate-slide-up">
+      <div class="switch-btn active" id="loginToggle">Login</div>
+      <div class="switch-btn" id="signupToggle">Signup</div>
+    </div>
+
+    <!-- Login Form -->
+    <form id="loginForm" action="/login" method="POST" class="auth-form active animate-slide-up">
+      <div class="form-group">
+        <label for="loginUsername" class="form-label">Username or Email</label>
+        <input type="text" id="loginUsername" name="username" class="form-input" required>
+      </div>
+      <div class="form-group">
+        <label for="loginPassword" class="form-label">Password</label>
+        <input type="password" id="loginPassword" name="password" class="form-input" required>
+      </div>
+      <button type="submit" class="auth-btn">
+        <span>Login</span>
+      </button>
+    </form>
+
+    <!-- Signup Form -->
+    <form id="signupForm" action="/signup" method="POST" class="auth-form animate-slide-up">
+      <div class="form-group">
+        <label for="signupRole" class="form-label">Role</label>
+        <select id="signupRole" name="role" class="form-select" required>
+          <option value="" disabled selected>Select Role</option>
+          <option value="student">Student</option>
+          <option value="teacher">Teacher</option>
+          <option value="staff">Staff</option>
+          <option value="library">Library Staff</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="signupEmail" class="form-label">Email</label>
+        <input type="email" id="signupEmail" name="email" class="form-input" required>
+      </div>
+      <div class="form-group">
+        <label for="signupUsername" class="form-label">Username</label>
+        <input type="text" id="signupUsername" name="username" class="form-input" required>
+      </div>
+      <div class="form-group">
+        <label for="signupPassword" class="form-label">Password</label>
+        <input type="password" id="signupPassword" name="password" class="form-input" required>
+      </div>
+      <button type="submit" class="auth-btn">
+        <span>Signup</span>
+      </button>
+    </form>
+
+    <div class="auth-footer animate-slide-up">
+      Secure NFC-based payment system for educational institutions
+    </div>
+  </div>
+
+  <script>
+    const loginToggle = document.getElementById("loginToggle");
+    const signupToggle = document.getElementById("signupToggle");
+    const loginForm = document.getElementById("loginForm");
+    const signupForm = document.getElementById("signupForm");
+
+    loginToggle.onclick = () => {
+      loginToggle.classList.add("active");
+      signupToggle.classList.remove("active");
+      loginForm.classList.add("active");
+      signupForm.classList.remove("active");
+    };
+
+    signupToggle.onclick = () => {
+      signupToggle.classList.add("active");
+      loginToggle.classList.remove("active");
+      signupForm.classList.add("active");
+      loginForm.classList.remove("active");
+    };
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NFC Payment - ByteCredits</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      max-width: 500px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .header h2 {
+      font-size: 2em;
+      color: #2c3e50;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    .header h2::before {
+      content: "💳";
+      font-size: 0.8em;
+    }
+
+    .header p {
+      color: #666;
+      font-size: 0.9em;
+    }
+
+    .alert {
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .alert-success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .alert-error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #333;
+      font-size: 0.9em;
+    }
+
+    input {
+      width: 100%;
+      padding: 15px;
+      border: 2px solid #e1e5e9;
+      border-radius: 12px;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      background: white;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .toggle-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 25px;
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 12px;
+    }
+
+    .toggle-container span {
+      margin-right: 15px;
+      font-weight: 500;
+      color: #333;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    #output {
+      margin-top: 25px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 12px;
+      white-space: pre-wrap;
+      color: #333;
+      font-size: 0.9em;
+      border: 1px solid #e1e5e9;
+      min-height: 100px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .back-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+      color: white;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+    }
+
+    .back-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(231, 76, 60, 0.4);
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 15px;
+      }
+
+      .container {
+        padding: 30px 20px;
+      }
+
+      .header h2 {
+        font-size: 1.8em;
+      }
+
+      .toggle-container {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .toggle-container span {
+        margin-right: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="/student" class="back-btn">← Back</a>
+
+  <div class="container">
+    <div class="header">
+      <h2>NFC Payment</h2>
+      <p>Secure contactless payment using NFC technology</p>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-success">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="toggle-container">
+      <span>Use External NFC Reader:</span>
+      <label class="switch">
+        <input type="checkbox" id="externalToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label for="to_username">Recipient Username</label>
+      <input type="text" id="to_username" placeholder="Enter recipient username" required>
+    </div>
+
+    <div class="form-group">
+      <label for="amount">Amount (₹)</label>
+      <input type="number" id="amount" placeholder="Enter amount" required min="1" onchange="checkPinRequired()" oninput="checkPinRequired()">
+    </div>
+
+    <div class="form-group" id="pinGroup" style="display: none;">
+      <label for="pin">PIN (4 digits) *</label>
+      <input type="password" id="pin" placeholder="Enter 4-digit PIN" maxlength="4">
+      <small style="color: #666; font-size: 12px;">PIN required for payments over ₹500</small>
+    </div>
+
+    <button onclick="startNFC()">💳 Scan & Pay</button>
+
+    <div id="output"></div>
+  </div>
+
+  <script>
+    // Check if PIN is required based on amount
+    function checkPinRequired() {
+      const amount = parseFloat(document.getElementById('amount').value) || 0;
+      const pinGroup = document.getElementById('pinGroup');
+      const pinInput = document.getElementById('pin');
+      
+      if (amount > 500) {
+        pinGroup.style.display = 'block';
+        pinInput.required = true;
+      } else {
+        pinGroup.style.display = 'none';
+        pinInput.required = false;
+        pinInput.value = '';
+      }
+    }
+
+    // Restrict PIN input to numbers only
+    document.addEventListener('DOMContentLoaded', function() {
+      const pinInput = document.getElementById('pin');
+      pinInput.addEventListener('input', function(e) {
+        e.target.value = e.target.value.replace(/[^0-9]/g, '');
+      });
+    });
+
+    // Function to handle backend responses and redirect accordingly
+    function handleBackendResponse(response) {
+      const trimmedResponse = response.trim();
+      console.log("Backend response:", trimmedResponse);
+
+      if (trimmedResponse.toLowerCase().includes("payment successful")) {
+        alert(trimmedResponse);
+        setTimeout(() => {
+          window.location.href = "/student";
+        }, 2000);
+        return;
+      }
+
+      // Handle different response types from backend
+      switch (trimmedResponse) {
+        case "Insufficient balance":
+          alert("Insufficient balance for this transaction.");
+          break;
+        case "Sender not found":
+          alert("Sender not found. Please check the NFC card.");
+          break;
+        case " receiver not found":
+          alert("Recipient not found. Please check the username.");
+          break;
+        case "This is not a valid card please enter valid card!":
+          alert("Invalid NFC card. Please use a valid card.");
+          break;
+        case "Invalid mobile NFC data":
+          alert("Invalid NFC data from mobile reader. Please try again.");
+          break;
+        case "External NFC read failed":
+          alert("Failed to read from external NFC reader. Please try again.");
+          break;
+        case "Invalid NFC content":
+          alert("Invalid content on NFC card. Please use a valid card.");
+          break;
+        case "Invalid reader type":
+          alert("Invalid reader type selected.");
+          break;
+        case "Missing sender or recipient":
+          alert("Missing sender or recipient information.");
+          break;
+        case "Please login first":
+          alert("Please login first to make payments.");
+          break;
+        default:
+          // Check for card validation error (contains "Invalid card!")
+          if (trimmedResponse.includes("Invalid card!")) {
+            alert(trimmedResponse);
+            // Redirect to NFC payment page after 2 seconds
+            setTimeout(() => {
+              window.location.href = "/proceed_payment";
+            }, 2000);
+          } else {
+            // For any other response, show the message and stay on current page
+            const output = document.getElementById('output');
+            if (output) {
+              output.innerText += `\n\nResponse: ${trimmedResponse}`;
+            }
+          }
+          break;
+      }
+    }
+
+    async function startNFC() {
+      const isExternal = document.getElementById('externalToggle').checked;
+      const to_username = document.getElementById('to_username').value;
+      const amount = document.getElementById('amount').value;
+      const pin = document.getElementById('pin').value;
+
+      if (!to_username || !amount) {
+        alert("Please fill out all form fields.");
+        return;
+      }
+
+      // Validate amount
+      const amountNum = parseFloat(amount);
+      if (isNaN(amountNum) || amountNum <= 0) {
+        alert("Please enter a valid amount greater than 0.");
+        return;
+      }
+
+      // Validate PIN if required
+      if (amountNum > 500) {
+        if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+          alert('Please enter a valid 4-digit PIN for payments over ₹500');
+          document.getElementById('pin').focus();
+          return;
+        }
+      }
+
+      const output = document.getElementById('output');
+
+      if (isExternal) {
+        output.innerText = "Reading from external NFC reader...";
+        try {
+          const response = await fetch('/nfc-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: "external", to_username, amount, pin: amountNum > 500 ? pin : null })
+          });
+          const result = await response.text();
+          output.innerText = result;
+
+          // Corrected redirection logic
+          handleBackendResponse(result);
+
+        } catch (error) {
+          output.innerText = "Network error: " + error.message;
+        }
+        return;
+      }
+
+      try {
+        const ndef = new NDEFReader();
+        await ndef.scan();
+        output.innerText = "Waiting for NFC tag...";
+
+        ndef.onreading = async (event) => {
+          let jsonText = "";
+          for (const record of event.message.records) {
+            if (record.recordType === "text") {
+              jsonText += new TextDecoder().decode(record.data);
+            }
+          }
+
+          output.innerText = "Card Read:\n" + jsonText;
+
+          try {
+            const response = await fetch('/nfc-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: "mobile",
+                to_username,
+                amount,
+                nfc_data: jsonText,
+                pin: amountNum > 500 ? pin : null
+              })
+            });
+
+            const result = await response.text();
+            output.innerText += `\n\nServer: ${result}`;
+            
+            // Handle redirection based on backend response
+            handleBackendResponse(result);
+          } catch (error) {
+            output.innerText += `\n\nNetwork error: ${error.message}`;
+          }
+        };
+      } catch (err) {
+        output.innerText = "Web NFC Error: " + err;
+      }
+    }
+  </script>
+</body>
+</html>

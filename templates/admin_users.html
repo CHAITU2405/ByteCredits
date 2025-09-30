@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Management - ByteCredits Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='mobile.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='ICON.png') }}">
+    <style>
+        .admin-container {
+            min-height: 100vh;
+            background: var(--gray-50);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .admin-header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: var(--space-4);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: var(--space-2);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            font-size: var(--font-size-lg);
+            transition: all var(--transition-normal);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .header-title {
+            font-size: var(--font-size-xl);
+            font-weight: var(--font-bold);
+            margin: 0;
+        }
+
+        .admin-content {
+            flex: 1;
+            padding: var(--space-6);
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-6);
+        }
+
+        .page-title {
+            font-size: var(--font-size-2xl);
+            font-weight: var(--font-bold);
+            color: var(--gray-900);
+            margin: 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+
+        .stat-card {
+            background: white;
+            padding: var(--space-4);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: var(--font-size-2xl);
+            font-weight: var(--font-bold);
+            color: var(--primary);
+            margin-bottom: var(--space-1);
+        }
+
+        .stat-label {
+            font-size: var(--font-size-sm);
+            color: var(--gray-600);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .data-table {
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: var(--space-4);
+            border-bottom: 1px solid var(--gray-200);
+            background: var(--gray-50);
+        }
+
+        .table-title {
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-semibold);
+            color: var(--gray-900);
+            margin: 0;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: var(--space-3) var(--space-4);
+            text-align: left;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .table th {
+            background: var(--gray-50);
+            font-weight: var(--font-semibold);
+            color: var(--gray-700);
+            font-size: var(--font-size-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .table td {
+            color: var(--gray-900);
+            font-size: var(--font-size-sm);
+        }
+
+        .table tbody tr:hover {
+            background: var(--gray-50);
+        }
+
+        .badge {
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-semibold);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge.admin {
+            background: var(--danger-light);
+            color: var(--danger);
+        }
+
+        .badge.student {
+            background: var(--success-light);
+            color: var(--success);
+        }
+
+        .badge.active {
+            background: var(--success-light);
+            color: var(--success);
+        }
+
+        .badge.inactive {
+            background: var(--gray-200);
+            color: var(--gray-600);
+        }
+
+        .action-btn {
+            padding: var(--space-1) var(--space-2);
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-semibold);
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            margin-right: var(--space-1);
+        }
+
+        .action-btn.primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .action-btn.danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .action-btn.danger:hover {
+            background: var(--danger-hover);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--space-8);
+            color: var(--gray-500);
+        }
+
+        .empty-icon {
+            font-size: var(--font-size-4xl);
+            margin-bottom: var(--space-4);
+        }
+
+        .empty-title {
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-semibold);
+            margin-bottom: var(--space-2);
+        }
+
+        .empty-description {
+            font-size: var(--font-size-sm);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .admin-content {
+                padding: var(--space-4);
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: var(--space-3);
+            }
+            
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-4);
+            }
+            
+            .table {
+                font-size: var(--font-size-xs);
+            }
+            
+            .table th,
+            .table td {
+                padding: var(--space-2);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Header -->
+        <header class="admin-header">
+            <div class="header-left">
+                <a href="{{ url_for('admin_analytical_dashboard') }}" class="back-btn">
+                    ← Back to Dashboard
+                </a>
+                <h1 class="header-title">User Management</h1>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="admin-content">
+            <div class="page-header">
+                <h2 class="page-title">All Users</h2>
+            </div>
+
+            <!-- Statistics -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">{{ users|length }}</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ users|selectattr('role', 'equalto', 'admin')|list|length }}</div>
+                    <div class="stat-label">Admins</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ users|selectattr('role', 'equalto', 'student')|list|length }}</div>
+                    <div class="stat-label">Students</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ users|selectattr('is_active', 'equalto', True)|list|length }}</div>
+                    <div class="stat-label">Active Users</div>
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div class="data-table">
+                <div class="table-header">
+                    <h3 class="table-title">User List</h3>
+                </div>
+                
+                {% if users %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>
+                                <strong>{{ user.username }}</strong>
+                            </td>
+                            <td>{{ user.email or 'Not set' }}</td>
+                            <td>
+                                <span class="badge {{ user.role }}">
+                                    {{ user.role.title() }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {{ 'active' if user.is_active else 'inactive' }}">
+                                    {{ 'Active' if user.is_active else 'Inactive' }}
+                                </span>
+                            </td>
+                            <td>{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else 'Unknown' }}</td>
+                            <td>
+                                <button class="action-btn primary" onclick="viewUser('{{ user.username }}')">
+                                    View
+                                </button>
+                                {% if user.role == 'student' %}
+                                <button class="action-btn danger" onclick="toggleUserStatus('{{ user.username }}')">
+                                    {{ 'Deactivate' if user.is_active else 'Activate' }}
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">👥</div>
+                    <div class="empty-title">No Users Found</div>
+                    <div class="empty-description">There are no users in the system yet.</div>
+                </div>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function viewUser(username) {
+            // Implement user view functionality
+            alert('View user: ' + username);
+        }
+
+        function toggleUserStatus(username) {
+            if (confirm('Are you sure you want to toggle this user\'s status?')) {
+                // Implement user status toggle
+                alert('Toggle status for: ' + username);
+            }
+        }
+    </script>
+</body>
+</html>

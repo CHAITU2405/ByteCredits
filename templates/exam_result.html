@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Exam Result - ByteCredits</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Exam Result Specific Styles */
+        .result-header {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: var(--space-8);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--gray-200);
+            margin-bottom: var(--space-6);
+            text-align: center;
+        }
+
+        .result-title {
+            font-size: var(--text-3xl);
+            font-weight: var(--font-bold);
+            color: var(--gray-900);
+            margin-bottom: var(--space-4);
+        }
+
+        .result-subtitle {
+            font-size: var(--text-lg);
+            color: var(--gray-600);
+            margin-bottom: var(--space-6);
+        }
+
+        .score-display {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-8);
+            margin-bottom: var(--space-6);
+            flex-wrap: wrap;
+        }
+
+        .score-item {
+            text-align: center;
+            padding: var(--space-4);
+            background: var(--gray-50);
+            border-radius: var(--radius-lg);
+            min-width: 120px;
+        }
+
+        .score-value {
+            font-size: var(--text-3xl);
+            font-weight: var(--font-bold);
+            color: var(--primary);
+            margin-bottom: var(--space-1);
+        }
+
+        .score-label {
+            font-size: var(--text-sm);
+            color: var(--gray-600);
+            font-weight: var(--font-medium);
+        }
+
+        .grade-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-3) var(--space-6);
+            border-radius: var(--radius-full);
+            font-size: var(--text-lg);
+            font-weight: var(--font-bold);
+            margin-bottom: var(--space-4);
+        }
+
+        .grade-excellent {
+            background: var(--success-light);
+            color: var(--success-dark);
+        }
+
+        .grade-good {
+            background: var(--info-light);
+            color: var(--info-dark);
+        }
+
+        .grade-average {
+            background: var(--warning-light);
+            color: var(--warning-dark);
+        }
+
+        .grade-poor {
+            background: var(--danger-light);
+            color: var(--danger-dark);
+        }
+
+        .result-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-6);
+            margin-bottom: var(--space-8);
+        }
+
+        .summary-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+        }
+
+        .summary-card h3 {
+            font-size: var(--text-lg);
+            font-weight: var(--font-semibold);
+            color: var(--gray-900);
+            margin-bottom: var(--space-4);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-2) 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-label {
+            color: var(--gray-600);
+            font-size: var(--text-sm);
+        }
+
+        .summary-value {
+            font-weight: var(--font-semibold);
+            color: var(--gray-900);
+        }
+
+        .questions-review {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: var(--space-8);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            margin-bottom: var(--space-6);
+        }
+
+        .questions-review h2 {
+            font-size: var(--text-2xl);
+            font-weight: var(--font-bold);
+            color: var(--gray-900);
+            margin-bottom: var(--space-6);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .question-review {
+            margin-bottom: var(--space-8);
+            padding: var(--space-6);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            background: var(--gray-50);
+        }
+
+        .question-review:last-child {
+            margin-bottom: 0;
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--space-4);
+            gap: var(--space-4);
+        }
+
+        .question-number {
+            background: var(--primary);
+            color: var(--white);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: var(--font-bold);
+            font-size: var(--text-lg);
+            flex-shrink: 0;
+        }
+
+        .question-content {
+            flex: 1;
+        }
+
+        .question-text {
+            font-size: var(--text-lg);
+            font-weight: var(--font-semibold);
+            color: var(--gray-900);
+            margin-bottom: var(--space-3);
+            line-height: var(--line-height-relaxed);
+        }
+
+        .question-meta {
+            display: flex;
+            gap: var(--space-4);
+            align-items: center;
+            margin-bottom: var(--space-4);
+            flex-wrap: wrap;
+        }
+
+        .question-type {
+            background: var(--info-light);
+            color: var(--info-dark);
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-full);
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+        }
+
+        .question-marks {
+            color: var(--gray-600);
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+        }
+
+        .answer-section {
+            margin-top: var(--space-4);
+        }
+
+        .answer-label {
+            font-size: var(--text-sm);
+            font-weight: var(--font-semibold);
+            color: var(--gray-700);
+            margin-bottom: var(--space-2);
+            display: block;
+        }
+
+        .student-answer {
+            background: var(--white);
+            border: 2px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            padding: var(--space-3);
+            margin-bottom: var(--space-3);
+            font-size: var(--text-sm);
+            line-height: var(--line-height-relaxed);
+        }
+
+        .correct-answer {
+            background: var(--success-light);
+            border-color: var(--success);
+            color: var(--success-dark);
+        }
+
+        .incorrect-answer {
+            background: var(--danger-light);
+            border-color: var(--danger);
+            color: var(--danger-dark);
+        }
+
+        .partial-answer {
+            background: var(--warning-light);
+            border-color: var(--warning);
+            color: var(--warning-dark);
+        }
+
+        .feedback-section {
+            background: var(--white);
+            border-radius: var(--radius-md);
+            padding: var(--space-4);
+            border-left: 4px solid var(--primary);
+        }
+
+        .feedback-title {
+            font-size: var(--text-sm);
+            font-weight: var(--font-semibold);
+            color: var(--gray-700);
+            margin-bottom: var(--space-2);
+        }
+
+        .feedback-text {
+            font-size: var(--text-sm);
+            color: var(--gray-600);
+            line-height: var(--line-height-relaxed);
+        }
+
+        .marks-awarded {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            font-size: var(--text-sm);
+            font-weight: var(--font-semibold);
+        }
+
+        .marks-correct {
+            color: var(--success-dark);
+        }
+
+        .marks-incorrect {
+            color: var(--danger-dark);
+        }
+
+        .marks-partial {
+            color: var(--warning-dark);
+        }
+
+        .result-actions {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-4);
+            margin-top: var(--space-8);
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: var(--space-3) var(--space-6);
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: var(--text-base);
+            font-weight: var(--font-semibold);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            min-height: 48px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-icon {
+            font-size: var(--text-lg);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .score-display {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .result-summary {
+                grid-template-columns: 1fr;
+            }
+
+            .question-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .question-meta {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-2);
+            }
+
+            .result-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            .result-actions {
+                display: none;
+            }
+            
+            .result-header,
+            .summary-card,
+            .questions-review {
+                box-shadow: none;
+                border: 1px solid var(--gray-300);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Result Header -->
+        <div class="result-header">
+            <h1 class="result-title">Exam Result</h1>
+            <p class="result-subtitle">{{ exam.subject_name }} - {{ exam.question_format.replace('_', ' ').title() }}</p>
+            
+            <div class="score-display">
+                <div class="score-item">
+                    <div class="score-value">{{ result.obtained_marks }}</div>
+                    <div class="score-label">Marks Obtained</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-value">{{ result.total_marks }}</div>
+                    <div class="score-label">Total Marks</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-value">{{ result.percentage }}%</div>
+                    <div class="score-label">Percentage</div>
+                </div>
+            </div>
+
+            <div class="grade-badge grade-{{ result.grade.lower() }}">
+                <span>🏆</span>
+                <span>Grade: {{ result.grade }}</span>
+            </div>
+        </div>
+
+        <!-- Result Summary -->
+        <div class="result-summary">
+            <div class="summary-card">
+                <h3>
+                    <span>📊</span>
+                    <span>Performance Summary</span>
+                </h3>
+                <div class="summary-item">
+                    <span class="summary-label">Questions Attempted</span>
+                    <span class="summary-value">{{ result.questions_attempted }}/{{ result.total_questions }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Correct Answers</span>
+                    <span class="summary-value">{{ result.correct_answers }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Partially Correct</span>
+                    <span class="summary-value">{{ result.partially_correct_answers }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Incorrect Answers</span>
+                    <span class="summary-value">{{ result.incorrect_answers }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Accuracy</span>
+                    <span class="summary-value">{{ result.accuracy }}%</span>
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <h3>
+                    <span>⏱️</span>
+                    <span>Time Analysis</span>
+                </h3>
+                <div class="summary-item">
+                    <span class="summary-label">Time Allotted</span>
+                    <span class="summary-value">{{ exam.time_limit }} minutes</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Time Taken</span>
+                    <span class="summary-value">{{ result.time_taken }} minutes</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Time Efficiency</span>
+                    <span class="summary-value">{{ result.time_efficiency }}%</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Average per Question</span>
+                    <span class="summary-value">{{ result.avg_time_per_question }} min</span>
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <h3>
+                    <span>📈</span>
+                    <span>Subject Analysis</span>
+                </h3>
+                <div class="summary-item">
+                    <span class="summary-label">Subject</span>
+                    <span class="summary-value">{{ exam.subject_name }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Format</span>
+                    <span class="summary-value">{{ exam.question_format.replace('_', ' ').title() }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Difficulty</span>
+                    <span class="summary-value">{{ exam.difficulty_level }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Exam Date</span>
+                    <span class="summary-value">{{ result.evaluated_at.strftime('%B %d, %Y') }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Questions Review -->
+        <div class="questions-review">
+            <h2>
+                <span>📝</span>
+                <span>Question-wise Review</span>
+            </h2>
+
+            {% for question in questions %}
+                <div class="question-review">
+                    <div class="question-header">
+                        <div class="question-number">{{ loop.index }}</div>
+                        <div class="question-content">
+                            <div class="question-meta">
+                                <span class="question-type">{{ question.type.replace('_', ' ').title() }}</span>
+                                <span class="question-marks">{{ question.marks }} marks</span>
+                                <div class="marks-awarded marks-{{ 'correct' if question.marks_awarded == question.marks else 'incorrect' if question.marks_awarded == 0 else 'partial' }}">
+                                    <span>Marks: {{ question.marks_awarded }}/{{ question.marks }}</span>
+                                </div>
+                            </div>
+                            <div class="question-text">{{ question.question }}</div>
+                        </div>
+                    </div>
+
+                    <div class="answer-section">
+                        <label class="answer-label">Your Answer:</label>
+                        <div class="student-answer {{ 'correct-answer' if question.marks_awarded == question.marks else 'incorrect-answer' if question.marks_awarded == 0 else 'partial-answer' }}">
+                            {{ question.student_answer or 'No answer provided' }}
+                        </div>
+
+                        {% if question.correct_answer %}
+                            <label class="answer-label">Correct Answer:</label>
+                            <div class="student-answer correct-answer">
+                                {{ question.correct_answer }}
+                            </div>
+                        {% endif %}
+
+                        {% if question.feedback %}
+                            <div class="feedback-section">
+                                <div class="feedback-title">Feedback:</div>
+                                <div class="feedback-text">{{ question.feedback }}</div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Result Actions -->
+        <div class="result-actions">
+            <a href="/mock_exam" class="btn btn-outline">
+                <span class="btn-icon">📚</span>
+                <span>Back to Mock Exams</span>
+            </a>
+            <a href="/create_mock_exam" class="btn btn-primary">
+                <span class="btn-icon">➕</span>
+                <span>Take Another Exam</span>
+            </a>
+            <button onclick="window.print()" class="btn btn-outline">
+                <span class="btn-icon">🖨️</span>
+                <span>Print Result</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced interactions
+        function enhanceInteractions() {
+            // Add smooth scrolling for better UX
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+
+            // Add expand/collapse functionality for questions
+            document.querySelectorAll('.question-review').forEach(question => {
+                const header = question.querySelector('.question-header');
+                const content = question.querySelector('.answer-section');
+                
+                header.style.cursor = 'pointer';
+                header.addEventListener('click', function() {
+                    content.style.display = content.style.display === 'none' ? 'block' : 'none';
+                });
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            enhanceInteractions();
+        });
+
+        // Print functionality
+        function printResult() {
+            window.print();
+        }
+
+        // Share result functionality
+        function shareResult() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Mock Exam Result',
+                    text: `I scored ${result.percentage}% in ${exam.subject_name} mock exam!`,
+                    url: window.location.href
+                });
+            } else {
+                // Fallback for browsers that don't support Web Share API
+                const text = `I scored ${result.percentage}% in ${exam.subject_name} mock exam! Check out my result: ${window.location.href}`;
+                navigator.clipboard.writeText(text).then(() => {
+                    showNotification('Result link copied to clipboard!', 'success');
+                });
+            }
+        }
+
+        // Notification system
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <span class="notification-icon">${type === 'success' ? '✓' : '⚠'}</span>
+                <span class="notification-message">${message}</span>
+            `;
+            
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? 'var(--success)' : 'var(--warning)'};
+                color: white;
+                padding: var(--space-3) var(--space-4);
+                border-radius: var(--radius-md);
+                box-shadow: var(--shadow-lg);
+                z-index: 1000;
+                display: flex;
+                align-items: center;
+                gap: var(--space-2);
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

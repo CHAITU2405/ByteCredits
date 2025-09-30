@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My NFC Cards</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #e5e7eb; padding: 10px 12px; text-align: left; }
+    th { background: #f9fafb; font-weight: 600; }
+    .badge { padding: 4px 8px; border-radius: 999px; font-size: 12px; }
+    .active { background: #dcfce7; color: #166534; }
+    .inactive { background: #fee2e2; color: #991b1b; }
+    button { padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; cursor: pointer; }
+  </style>
+  <script>
+    async function toggle(cardId) {
+      const res = await fetch(`/nfc/cards/${encodeURIComponent(cardId)}/toggle`, { method: 'POST' });
+      const txt = await res.text();
+      alert(txt);
+      location.reload();
+    }
+  </script>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header"><h1>My NFC Cards</h1></div>
+    <div class="card-body">
+  <p class="muted">Enable or disable your NFC cards if lost or found.</p>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Card ID</th>
+        <th>Status</th>
+        <th>Updated</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for card in cards %}
+      <tr>
+        <td>{{ card.card_id }}</td>
+        <td>
+          <span class="badge {{ 'active' if card.status == 'active' else 'inactive' }}">{{ card.status }}</span>
+        </td>
+        <td>{{ card.updated_at }}</td>
+        <td><button onclick="toggle('{{ card.card_id }}')">Toggle</button></td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="4">No cards registered yet.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+    </div>
+  </div>
+</body>
+</html>
+
+

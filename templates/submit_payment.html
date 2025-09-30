@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Submit Payment Proof - ByteCredits</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='script/app.js') }}">
+  <style>
+    /* Page-specific styles */
+    body {
+      background: var(--primary-gradient);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-4);
+    }
+
+    .submit-container {
+      max-width: 500px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      padding: var(--space-8);
+      border-radius: var(--radius-2xl);
+      box-shadow: var(--shadow-2xl);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .submit-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--primary-gradient);
+    }
+
+    .submit-header {
+      text-align: center;
+      margin-bottom: var(--space-8);
+    }
+
+    .submit-title {
+      font-size: var(--font-size-3xl);
+      color: var(--gray-900);
+      margin-bottom: var(--space-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-4);
+      font-weight: 700;
+    }
+
+    .submit-title::before {
+      content: "📤";
+      font-size: 2rem;
+    }
+
+    .submit-subtitle {
+      color: var(--gray-600);
+      font-size: var(--font-size-base);
+      font-weight: 400;
+    }
+
+    .info-box {
+      background: var(--gray-50);
+      padding: var(--space-6);
+      border-radius: var(--radius-lg);
+      margin-bottom: var(--space-6);
+      border: 1px solid var(--gray-200);
+    }
+
+    .info-title {
+      color: var(--gray-900);
+      margin-bottom: var(--space-3);
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .info-text {
+      color: var(--gray-600);
+      font-size: var(--font-size-sm);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .form-group {
+      margin-bottom: var(--space-6);
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: var(--space-2);
+      font-weight: 500;
+      color: var(--gray-700);
+      font-size: var(--font-size-sm);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: var(--space-4);
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      font-size: var(--font-size-base);
+      transition: all var(--transition-fast);
+      background: var(--white);
+      font-family: inherit;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-input[type="file"] {
+      padding: var(--space-3);
+      cursor: pointer;
+    }
+
+    .form-input[type="file"]::-webkit-file-upload-button {
+      background: var(--primary-gradient);
+      color: var(--white);
+      border: none;
+      padding: var(--space-2) var(--space-4);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-weight: 500;
+      margin-right: var(--space-3);
+      transition: all var(--transition-fast);
+    }
+
+    .form-input[type="file"]::-webkit-file-upload-button:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: var(--space-4);
+      background: var(--primary-gradient);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      font-size: var(--font-size-base);
+      font-weight: 600;
+      transition: all var(--transition-normal);
+      margin-top: var(--space-4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .submit-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left var(--transition-slow);
+    }
+
+    .submit-btn:hover::before {
+      left: 100%;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .back-btn {
+      position: fixed;
+      top: var(--space-6);
+      left: var(--space-6);
+      padding: var(--space-3) var(--space-6);
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all var(--transition-normal);
+      box-shadow: var(--shadow-md);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .back-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* Animations */
+    .animate-fade-in {
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    .animate-slide-up {
+      animation: slideUp 0.4s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      body {
+        padding: var(--space-3);
+      }
+
+      .submit-container {
+        padding: var(--space-6) var(--space-4);
+      }
+
+      .submit-title {
+        font-size: var(--font-size-2xl);
+      }
+
+      .back-btn {
+        top: var(--space-4);
+        left: var(--space-4);
+        padding: var(--space-2) var(--space-4);
+        font-size: var(--font-size-sm);
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="/student" class="back-btn animate-fade-in">
+    <span>←</span>
+    <span>Back</span>
+  </a>
+
+  <div class="submit-container animate-fade-in">
+    <div class="submit-header animate-slide-up">
+      <h2 class="submit-title">Submit Payment Proof</h2>
+      <p class="submit-subtitle">Upload your payment proof for credit approval</p>
+    </div>
+
+    <div class="info-box animate-slide-up">
+      <h3 class="info-title">
+        <span>📋</span>
+        Instructions
+      </h3>
+      <p class="info-text">
+        Please upload a clear image or PDF of your payment receipt. The file should show the payment amount, date, and transaction details clearly.
+      </p>
+    </div>
+
+    <form action="/submit_payment" method="POST" enctype="multipart/form-data" class="animate-slide-up">
+      <div class="form-group">
+        <label for="name" class="form-label">Full Name</label>
+        <input type="text" id="name" name="name" class="form-input" placeholder="Enter your full name" required>
+      </div>
+
+      <div class="form-group">
+        <label for="roll" class="form-label">Roll Number</label>
+        <input type="text" id="roll" name="roll" class="form-input" placeholder="Enter your roll number" required>
+      </div>
+
+      <div class="form-group">
+        <label for="amount" class="form-label">Amount Paid (₹)</label>
+        <input type="number" id="amount" name="amount" class="form-input" placeholder="Enter the amount paid" required min="1">
+      </div>
+
+      <div class="form-group">
+        <label for="proof" class="form-label">Upload Payment Proof</label>
+        <input type="file" id="proof" name="proof" class="form-input" accept="image/*,application/pdf" required>
+      </div>
+
+      <button type="submit" class="submit-btn">
+        <span>📤 Submit Payment Proof</span>
+      </button>
+    </form>
+  </div>
+</body>
+</html>

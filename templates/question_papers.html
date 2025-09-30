@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Question Papers - ByteCredits</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    body { background: var(--light-gray); min-height: 100vh; }
+    .container { max-width: 960px; margin: 0 auto; padding: var(--space-8); }
+    .header { display:flex; align-items:center; justify-content:space-between; margin-bottom: var(--space-6); }
+    .title { font-size: var(--font-size-2xl); font-weight:700; color: var(--gray-900); }
+    .card { background: var(--white); border:1px solid var(--gray-200); border-radius: var(--radius-xl); box-shadow: var(--shadow-md); }
+    .table { width:100%; border-collapse: collapse; }
+    .table th,.table td { padding: var(--space-4); border-bottom: 1px solid var(--gray-200); text-align:left; }
+    .table th { background: var(--gray-50); color: var(--gray-700); font-weight:600; font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: 0.05em; }
+    .btn { padding: var(--space-2) var(--space-4); background: var(--primary-gradient); color: var(--white); border:none; border-radius: var(--radius-lg); cursor:pointer; font-weight:600; }
+    .muted { color: var(--gray-600); }
+    .empty { text-align:center; padding: var(--space-8); color: var(--gray-600); }
+    .back { text-decoration:none; color:#667eea; font-weight:600; }
+  </style>
+  <link rel="icon" href="{{ url_for('static', filename='ICON.png') }}">
+</head>
+<body>
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-success">
+          <span>✓</span>
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="container">
+    <div class="header">
+      <h1 class="title">Previous Question Papers</h1>
+      <a class="back" href="{{ url_for('student') }}">← Back to Dashboard</a>
+    </div>
+
+    <div class="card">
+      {% if files %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>File</th>
+            <th>Size (KB)</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in files %}
+          <tr>
+            <td>{{ f.name }}</td>
+            <td class="muted">{{ f.size_kb }}</td>
+            <td>
+              <a class="btn" href="{{ url_for('download_question_paper', filename=f.name) }}">Download</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+        <div class="empty">No question papers available yet.</div>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>
+
+

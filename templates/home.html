@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ByteCredits - NFC Payment System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="{{ url_for('static',filename='ICON.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <style>
+    /* Page-specific styles */
+    .hero-section {
+      background: var(--primary-gradient);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: var(--space-20) var(--space-4);
+      color: var(--white);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+      opacity: 0.3;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 800px;
+    }
+
+    .hero-title {
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 800;
+      margin-bottom: var(--space-6);
+      text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(1.1rem, 2vw, 1.4rem);
+      margin-bottom: var(--space-8);
+      opacity: 0.95;
+      line-height: 1.7;
+      font-weight: 400;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: var(--space-4);
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: var(--space-12);
+    }
+
+    .hero-btn {
+      padding: var(--space-4) var(--space-8);
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      border-radius: var(--radius-full);
+      text-decoration: none;
+      transition: all var(--transition-normal);
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .hero-btn.primary {
+      background: rgba(255, 255, 255, 0.2);
+      color: var(--white);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .hero-btn.secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--white);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .hero-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .features-section {
+      padding: var(--space-20) var(--space-4);
+      background: var(--white);
+    }
+
+    .features-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .features-title {
+      text-align: center;
+      font-size: clamp(2rem, 4vw, 3rem);
+      color: var(--gray-900);
+      margin-bottom: var(--space-12);
+      font-weight: 700;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: var(--space-8);
+    }
+
+    .feature-card {
+      background: var(--white);
+      padding: var(--space-8);
+      border-radius: var(--radius-2xl);
+      text-align: center;
+      transition: all var(--transition-normal);
+      border: 1px solid var(--gray-200);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--primary-gradient);
+      transform: scaleX(0);
+      transition: transform var(--transition-normal);
+    }
+
+    .feature-card:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-xl);
+    }
+
+    .feature-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .feature-icon {
+      font-size: 3.5rem;
+      margin-bottom: var(--space-6);
+      display: block;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+    }
+
+    .feature-title {
+      font-size: var(--font-size-xl);
+      color: var(--gray-900);
+      margin-bottom: var(--space-4);
+      font-weight: 600;
+    }
+
+    .feature-description {
+      color: var(--gray-600);
+      line-height: 1.6;
+      font-size: var(--font-size-base);
+    }
+
+    .navbar {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .navbar-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--space-4) var(--space-8);
+    }
+
+    .navbar-brand {
+      font-size: var(--font-size-2xl);
+      font-weight: 700;
+      color: var(--gray-900);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .navbar-brand::before {
+      content: "💳";
+      font-size: 1.5rem;
+    }
+
+    .navbar-nav {
+      display: flex;
+      gap: var(--space-6);
+      align-items: center;
+      list-style: none;
+    }
+
+    .nav-link {
+      color: var(--gray-600);
+      text-decoration: none;
+      font-weight: 500;
+      padding: var(--space-2) var(--space-4);
+      border-radius: var(--radius-lg);
+      transition: all var(--transition-fast);
+    }
+
+    .nav-link:hover {
+      color: #667eea;
+      background: rgba(102, 126, 234, 0.1);
+    }
+
+    .nav-link.btn-primary {
+      background: var(--primary-gradient);
+      color: var(--white);
+      padding: var(--space-3) var(--space-6);
+    }
+
+    .nav-link.btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .footer {
+      background: var(--gray-900);
+      color: var(--white);
+      text-align: center;
+      padding: var(--space-8) var(--space-4);
+      font-size: var(--font-size-sm);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .navbar-container {
+        flex-direction: column;
+        gap: var(--space-4);
+        padding: var(--space-3) var(--space-4);
+      }
+
+      .navbar-nav {
+        gap: var(--space-3);
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .hero-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .hero-btn {
+        width: 100%;
+        max-width: 300px;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-6);
+      }
+    }
+
+    /* Animations */
+    .animate-fade-in-up {
+      animation: fadeInUp 0.8s ease-out;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-delay-1 { animation-delay: 0.1s; }
+    .animate-delay-2 { animation-delay: 0.2s; }
+    .animate-delay-3 { animation-delay: 0.3s; }
+    .animate-delay-4 { animation-delay: 0.4s; }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="navbar-container">
+      <a href="/" class="navbar-brand">ByteCredits</a>
+      <ul class="navbar-nav">
+        <li><a href="/" class="nav-link">Home</a></li>
+        <li><a href="/submit_payment" class="nav-link">Submit Proof</a></li>
+        <li><a href="#features" class="nav-link">Features</a></li>
+        <li><a href="/access" class="nav-link btn-primary">Login</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <section class="hero-section">
+    <div class="hero-content animate-fade-in-up">
+      <h1 class="hero-title animate-fade-in-up animate-delay-1">
+        Welcome to ByteCredits
+      </h1>
+      <p class="hero-subtitle animate-fade-in-up animate-delay-2">
+        Revolutionary NFC-based payment tracking system for colleges. Submit payment proofs, 
+        manage credits, and experience seamless digital payments with advanced security.
+      </p>
+      <div class="hero-buttons animate-fade-in-up animate-delay-3">
+        <a href="/submit_payment" class="hero-btn primary">Submit Payment Proof</a>
+        <a href="/access" class="hero-btn secondary">Get Started</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="features-section" id="features">
+    <div class="features-container">
+      <h2 class="features-title animate-fade-in-up">Why Choose ByteCredits?</h2>
+      <div class="features-grid">
+        <div class="feature-card animate-fade-in-up animate-delay-1">
+          <span class="feature-icon">💳</span>
+          <h3 class="feature-title">NFC Payment System</h3>
+          <p class="feature-description">
+            Secure contactless payments using NFC technology for quick and safe transactions.
+          </p>
+        </div>
+        <div class="feature-card animate-fade-in-up animate-delay-2">
+          <span class="feature-icon">📱</span>
+          <h3 class="feature-title">Mobile Integration</h3>
+          <p class="feature-description">
+            Use your smartphone's NFC reader or external NFC devices for flexible payment options.
+          </p>
+        </div>
+        <div class="feature-card animate-fade-in-up animate-delay-3">
+          <span class="feature-icon">🔒</span>
+          <h3 class="feature-title">Advanced Security</h3>
+          <p class="feature-description">
+            Card ownership validation ensures only authorized users can make payments with their cards.
+          </p>
+        </div>
+        <div class="feature-card animate-fade-in-up animate-delay-4">
+          <span class="feature-icon">📊</span>
+          <h3 class="feature-title">Payment Tracking</h3>
+          <p class="feature-description">
+            Complete transaction history with detailed payment proofs and approval workflows.
+          </p>
+        </div>
+        <div class="feature-card animate-fade-in-up animate-delay-1">
+          <span class="feature-icon">🏛️</span>
+          <h3 class="feature-title">College Integration</h3>
+          <p class="feature-description">
+            Dedicated college payment portal for fee management and administrative oversight.
+          </p>
+        </div>
+        <div class="feature-card animate-fade-in-up animate-delay-2">
+          <span class="feature-icon">💰</span>
+          <h3 class="feature-title">Refund Management</h3>
+          <p class="feature-description">
+            Streamlined refund request system with admin approval workflow for transparency.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>© 2025 ByteCredits. All rights reserved. | NFC Payment System for Colleges</p>
+  </footer>
+
+</body>
+</html>

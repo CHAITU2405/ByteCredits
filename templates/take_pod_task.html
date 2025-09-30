@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ task.title }} - Pod Task</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .task-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .task-content {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        .timer-display {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border-radius: 50px;
+            padding: 10px 20px;
+            font-weight: bold;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .objective-badge {
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-radius: 20px;
+            padding: 5px 15px;
+            font-size: 0.9rem;
+            margin: 2px;
+            display: inline-block;
+        }
+        .task-type-badge {
+            border-radius: 20px;
+            padding: 8px 20px;
+            font-size: 0.9rem;
+            margin: 2px;
+        }
+        .micro-lesson { background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%); color: white; }
+        .peer-challenge { background: linear-gradient(45deg, #43e97b 0%, #38f9d7 100%); color: white; }
+        .reflection { background: linear-gradient(45deg, #fa709a 0%, #fee140 100%); color: white; }
+        .collaboration-panel {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .response-area {
+            min-height: 200px;
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .response-area:focus-within {
+            border-color: #667eea;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Timer Display -->
+    <div class="timer-display" id="timerDisplay">
+        <i class="fas fa-clock"></i> <span id="timer">00:00</span>
+    </div>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-tasks"></i> Pod Task
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('pod_detail', pod_id=task.pod_id) }}">
+                    <i class="fas fa-arrow-left"></i> Back to Pod
+                </a>
+                <a class="nav-link" href="{{ url_for('learning_pods_dashboard') }}">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Task Header -->
+        <div class="task-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="display-5 mb-2">
+                        <i class="fas fa-tasks"></i> {{ task.title }}
+                    </h1>
+                    <span class="task-type-badge {{ task.task_type.replace('_', '-') }}">
+                        {{ task.task_type.replace('_', ' ').title() }}
+                    </span>
+                    <p class="mb-2 mt-2">
+                        <i class="fas fa-book"></i> {{ task.subject }} • 
+                        <i class="fas fa-clock"></i> {{ task.estimated_duration }} minutes • 
+                        <i class="fas fa-calendar"></i> {{ task.assigned_date.strftime('%B %d, %Y') }}
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="d-flex flex-column align-items-end">
+                        <span class="badge bg-light text-dark mb-2">
+                            Status: {{ task.status.title() }}
+                        </span>
+                        {% if submission %}
+                        <span class="badge bg-success">
+                            <i class="fas fa-check"></i> Submitted
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Learning Objectives -->
+        {% if task.learning_objectives %}
+        <div class="task-content">
+            <h4><i class="fas fa-target"></i> Learning Objectives</h4>
+            <div class="mb-3">
+                {% for objective in task.learning_objectives %}
+                <span class="objective-badge">{{ objective }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Task Description -->
+        <div class="task-content">
+            <h4><i class="fas fa-info-circle"></i> Task Description</h4>
+            <p class="lead">{{ task.description }}</p>
+            
+            {% if task.content %}
+            <div class="mt-4">
+                <h5>Instructions:</h5>
+                <div class="bg-light p-3 rounded">
+                    <pre class="mb-0">{{ task.content.instructions if task.content.instructions else 'No specific instructions provided.' }}</pre>
+                </div>
+            </div>
+            
+            {% if task.content.materials %}
+            <div class="mt-3">
+                <h5>Materials:</h5>
+                <ul class="list-group">
+                    {% for material in task.content.materials %}
+                    <li class="list-group-item">{{ material }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+
+        <!-- Collaboration Panel -->
+        <div class="collaboration-panel">
+            <h4><i class="fas fa-users"></i> Collaboration Tips</h4>
+            <div class="row">
+                <div class="col-md-6">
+                    <h6><i class="fas fa-lightbulb"></i> For {{ task.task_type.replace('_', ' ').title() }}:</h6>
+                    <ul class="mb-0">
+                        {% if task.task_type == 'micro_lesson' %}
+                        <li>Explain concepts clearly to your pod members</li>
+                        <li>Use examples and analogies</li>
+                        <li>Ask questions to check understanding</li>
+                        {% elif task.task_type == 'peer_challenge' %}
+                        <li>Work together to solve problems</li>
+                        <li>Share different approaches and ideas</li>
+                        <li>Help each other when stuck</li>
+                        {% elif task.task_type == 'reflection' %}
+                        <li>Share your thoughts openly</li>
+                        <li>Listen to others' perspectives</li>
+                        <li>Build on each other's ideas</li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6><i class="fas fa-star"></i> Earning Credits:</h6>
+                    <ul class="mb-0">
+                        <li>Complete task: <strong>5 credits</strong></li>
+                        <li>Help others: <strong>+2 credits</strong></li>
+                        <li>Quality responses: <strong>+3 credits</strong></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Task Response Form -->
+        <div class="task-content">
+            <h4><i class="fas fa-edit"></i> Your Response</h4>
+            
+            {% if submission %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> You have already submitted this task. You can update your response below.
+            </div>
+            {% endif %}
+            
+            <form id="taskForm">
+                <input type="hidden" id="taskId" value="{{ task.id }}">
+                <input type="hidden" id="timeSpent" value="0">
+                
+                <div class="mb-4">
+                    <label for="submissionContent" class="form-label">
+                        <strong>Your Response:</strong>
+                    </label>
+                    <div class="response-area">
+                        <textarea class="form-control border-0 bg-transparent" 
+                                  id="submissionContent" 
+                                  rows="8" 
+                                  placeholder="Share your thoughts, solutions, or reflections here. Remember to collaborate with your pod members!">{{ submission.submission_content if submission else '' }}</textarea>
+                    </div>
+                    <small class="text-muted">
+                        <i class="fas fa-lightbulb"></i> 
+                        Be detailed and thoughtful. Your pod members will benefit from your insights!
+                    </small>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="reflectionNotes" class="form-label">
+                        <strong>Reflection Notes (Optional):</strong>
+                    </label>
+                    <textarea class="form-control" 
+                              id="reflectionNotes" 
+                              rows="3" 
+                              placeholder="How did this task help you learn? What did you discover through collaboration?">{{ submission.reflection_notes if submission else '' }}</textarea>
+                    <small class="text-muted">
+                        <i class="fas fa-heart"></i> 
+                        Reflect on your learning experience and collaboration with pod members.
+                    </small>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-muted">
+                            <i class="fas fa-clock"></i> Time spent: <span id="timeDisplay">0 minutes</span>
+                        </small>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-secondary me-2" onclick="saveDraft()">
+                            <i class="fas fa-save"></i> Save Draft
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-paper-plane"></i> Submit Task
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let startTime = Date.now();
+        let timeInterval;
+        
+        // Start timer
+        function startTimer() {
+            timeInterval = setInterval(updateTimer, 1000);
+        }
+        
+        function updateTimer() {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            
+            document.getElementById('timer').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('timeDisplay').textContent = 
+                `${minutes} minutes`;
+            document.getElementById('timeSpent').value = minutes;
+        }
+        
+        // Start timer when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            startTimer();
+        });
+        
+        // Handle form submission
+        document.getElementById('taskForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const taskId = document.getElementById('taskId').value;
+            const submissionContent = document.getElementById('submissionContent').value;
+            const reflectionNotes = document.getElementById('reflectionNotes').value;
+            const timeSpent = Math.floor((Date.now() - startTime) / 60000); // in minutes
+            
+            if (!submissionContent.trim()) {
+                alert('Please provide your response before submitting.');
+                return;
+            }
+            
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+            submitBtn.disabled = true;
+            
+            fetch('/submit_pod_task', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    task_id: taskId,
+                    submission_content: submissionContent,
+                    reflection_notes: reflectionNotes,
+                    time_spent: timeSpent
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Task submitted successfully! You earned 5 credits.');
+                    window.location.href = `/pod/${task.pod_id}`;
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to submit task'));
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+        
+        function saveDraft() {
+            // Implementation for saving draft
+            alert('Draft saved! (Feature coming soon)');
+        }
+        
+        // Auto-save functionality
+        let autoSaveInterval;
+        document.addEventListener('DOMContentLoaded', function() {
+            autoSaveInterval = setInterval(function() {
+                const content = document.getElementById('submissionContent').value;
+                const notes = document.getElementById('reflectionNotes').value;
+                
+                if (content.trim() || notes.trim()) {
+                    // Auto-save to localStorage
+                    localStorage.setItem(`task_${task.id}_draft`, JSON.stringify({
+                        content: content,
+                        notes: notes,
+                        timestamp: Date.now()
+                    }));
+                }
+            }, 30000); // Auto-save every 30 seconds
+        });
+        
+        // Load draft on page load
+        window.addEventListener('load', function() {
+            const draft = localStorage.getItem(`task_${task.id}_draft`);
+            if (draft && !submission) {
+                const data = JSON.parse(draft);
+                if (Date.now() - data.timestamp < 86400000) { // 24 hours
+                    document.getElementById('submissionContent').value = data.content;
+                    document.getElementById('reflectionNotes').value = data.notes;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
